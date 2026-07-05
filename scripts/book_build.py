@@ -2,8 +2,8 @@ r"""
 Typeset the statistics mini-book PDF from the generated figures + stats.json.
 
 Every technical term used anywhere in the project gets its own callout: a plain
-definition plus a worked example from OUR data. Charts are the real figures
-produced by book_charts.py. Output: reports/Trading_by_the_Numbers.pdf
+definition plus a worked example from the author's data. Charts are the real
+figures produced by book_charts.py. Output: reports/Trading_by_the_Numbers.pdf
 
 Run:  .\.venv\Scripts\python.exe scripts\book_build.py
 """
@@ -58,6 +58,13 @@ st_title = ParagraphStyle("title", fontName="Helvetica-Bold", fontSize=27, leadi
                           textColor=INK, alignment=1)
 st_sub = ParagraphStyle("sub", fontName="Helvetica", fontSize=12.5, leading=18,
                         textColor=MUTED, alignment=1, spaceBefore=10)
+st_author = ParagraphStyle("author", fontName="Helvetica-Bold", fontSize=13, leading=17,
+                           textColor=INK, alignment=1, spaceBefore=6)
+st_contact = ParagraphStyle("contact", fontName="Helvetica", fontSize=10.5, leading=15,
+                            textColor=ACCENT, alignment=1)
+
+AUTHOR = "Nitzan Ben Dror"
+CONTACT = "[redacted-phone]  &nbsp;·&nbsp;  [redacted-email]"
 
 story = []
 _chapno = 0
@@ -100,7 +107,7 @@ def TERM(name, definition, example=None):
     rows = [[Paragraph(f"TERM &nbsp;·&nbsp; {name}", st_term_name)],
             [Paragraph(definition, st_term_body)]]
     if example:
-        rows.append([Paragraph(f"<b>From our data:</b> {example}", st_term_body)])
+        rows.append([Paragraph(f"<b>From my data:</b> {example}", st_term_body)])
     _box(rows, TERM_BG, TERM_EDGE)
 
 
@@ -119,34 +126,79 @@ def FIG(fname, caption, width=16.2):
 
 
 # ============================ TITLE PAGE =====================================
-story.append(Spacer(1, 4.2 * cm))
+story.append(Spacer(1, 3.4 * cm))
 story.append(Paragraph("Trading by the Numbers", st_title))
-story.append(Paragraph("A statistics field guide to our Polymarket research project", st_sub))
-story.append(Spacer(1, 1.2 * cm))
+story.append(Paragraph("An independent quantitative-research project on Polymarket's "
+                       "short-term crypto markets — and a plain-language guide to the "
+                       "statistics behind it.", st_sub))
+story.append(Spacer(1, 1.0 * cm))
+story.append(Paragraph(AUTHOR, st_author))
+story.append(Paragraph(CONTACT, st_contact))
+story.append(Spacer(1, 1.0 * cm))
 ds = S["dataset"]
 settled_phrase = ("all of them" if ds["settled"] == ds["buckets"]
                   else f"{ds['settled']:,} of them")
 story.append(Paragraph(
-    f"Every concept explained in plain language, and every example computed from our own "
+    f"Every concept explained in plain language, and every example computed from my own "
     f"dataset: <b>{ds['buckets']:,} recorded markets</b> ({ds['by_window']['5']:,} five-minute, "
     f"{ds['by_window']['15']:,} fifteen-minute, {ds['by_window']['60']} sixty-minute), "
     f"{settled_phrase} settled with verified real outcomes, captured tick-by-tick "
     f"over four days of live crypto Up/Down trading.", st_sub))
-story.append(Spacer(1, 2.2 * cm))
+story.append(Spacer(1, 1.6 * cm))
 story.append(Paragraph("All trading discussed here is simulated. No real money was used.", st_sub))
+
+# ============================ ABOUT THIS PROJECT =============================
+story.append(PageBreak())
+story.append(Paragraph("About this project", st_h1))
+story.append(Paragraph("What it is, what I built, and what it demonstrates.", st_cap))
+P("This is my independent quantitative-research project. Working solo, I designed and built "
+  "an end-to-end system to answer one question honestly: can a simple, rule-based strategy "
+  "make money trading Polymarket's short-term crypto Up/Down markets? Arriving at the answer "
+  "<b>rigorously</b> — rather than fooling myself — is the entire point, and the discipline "
+  "behind it is what this document is meant to show.")
+H2("What I built (from scratch, simulation-only)")
+for b in [
+    "<b>A tick-level market-data recorder</b> — captures both order books of every live market "
+    "over the exchange WebSocket, with millisecond timestamps and the full trade tape: ~16 GB "
+    "across 3,300+ markets, streaming-compressed on disk.",
+    "<b>An exact-fill backtesting engine</b> — reconstructs each order book tick-by-tick and "
+    "simulates every trade by walking the real price ladder for a real dollar size, settling on "
+    "the exchange's verified official outcomes (fetched, never guessed).",
+    "<b>A statistical validation toolkit</b> — block-bootstrap significance testing, "
+    "out-of-sample time splits, and latency + slippage modelling, so no result is trusted until "
+    "it survives them.",
+    "<b>A full-stack research dashboard</b> — Python / FastAPI backend and a React / TypeScript "
+    "frontend to record, resolve, replay and visualise, plus a live paper-trading bot that "
+    "trades the validated rule with a demo wallet.",
+]:
+    story.append(Paragraph(f"•&nbsp; {b}", ParagraphStyle("bul", parent=st_body, leftIndent=10,
+                                                          fontSize=10, leading=14.5, spaceAfter=6)))
+H2("What it demonstrates")
+P("I found an early, exciting result — a first-minute \"momentum edge\" that looked worth real "
+  "money — stress-tested it, and proved to myself with data that it was statistical noise. I "
+  "then found a smaller but genuine, test-surviving edge on the hourly markets. Being willing "
+  "and able to <b>kill my own best idea with evidence</b> is, I think, the most valuable thing "
+  "in here.")
+_box([[Paragraph("Technical skills demonstrated", st_term_name)],
+      [Paragraph("Python data engineering &nbsp;·&nbsp; statistical inference (bootstrap, "
+                 "hypothesis testing, calibration, out-of-sample validation) &nbsp;·&nbsp; market "
+                 "microstructure &amp; execution modelling &nbsp;·&nbsp; full-stack web "
+                 "(FastAPI, React / TypeScript) &nbsp;·&nbsp; building reproducible, honest "
+                 "research pipelines &nbsp;·&nbsp; clear technical communication.", st_term_body)]],
+     TERM_BG, TERM_EDGE)
 
 # ============================ HOW TO READ ====================================
 story.append(PageBreak())
 story.append(Paragraph("How to read this book", st_h1))
-P("This is the companion book to our trading research project. You do not need any math "
+P("This is the companion book to my trading research project. You do not need any math "
   "background: every term is introduced in a blue <b>TERM</b> box the first time it matters, "
-  "with a plain-language definition and a real example from our own data. Orange boxes flag "
-  "the classic mistakes — each one is a mistake we actually made and caught during the project, "
+  "with a plain-language definition and a real example from my own data. Orange boxes flag "
+  "the classic mistakes — each one is a mistake I actually made and caught during the project, "
   "so they are not hypothetical.")
-P("The story told across the chapters is the true story of the project: we had an idea, built "
-  "honest measuring instruments, discovered our first exciting result was an illusion, learned "
+P("The story told across the chapters is the true story of the project: I had an idea, built "
+  "honest measuring instruments, discovered my first exciting result was an illusion, learned "
   "the statistics that expose such illusions, and ended up with one strategy that survived "
-  "every test we could throw at it — and a demo-money bot now trading it live.")
+  "every test I could throw at it — and a demo-money bot now trading it live.")
 H2("Contents")
 toc = [
     "1 &nbsp; The playground — prediction markets",
@@ -158,7 +210,7 @@ toc = [
     "7 &nbsp; Not fooling yourself — overfitting, splits and regimes",
     "8 &nbsp; The two strategies — fading vs riding the move",
     "9 &nbsp; Execution reality — latency, stop-losses and drawdowns",
-    "10 &nbsp; Where we stand — the road to a live bot",
+    "10 &nbsp; Where I stand — the road to a live bot",
     "Glossary — every term on one page",
 ]
 for line in toc:
@@ -166,9 +218,9 @@ for line in toc:
 
 # ============================ CHAPTER 1 ======================================
 CH("The playground — prediction markets",
-   "What we are trading, and the single most important idea in this entire book: "
+   "What I am trading, and the single most important idea in this entire book: "
    "a price is a probability.")
-P("A <b>prediction market</b> lets people bet on a yes/no question by trading shares. Our "
+P("A <b>prediction market</b> lets people bet on a yes/no question by trading shares. My "
   "playground is Polymarket's crypto <b>Up/Down markets</b>: every 5, 15 and 60 minutes, a new "
   "market opens asking, for example, \"Will Bitcoin's price be higher at the end of this hour "
   "than at the start?\" There are only two outcomes, Up and Down, and you can buy shares of "
@@ -176,12 +228,12 @@ P("A <b>prediction market</b> lets people bet on a yes/no question by trading sh
 TERM("Binary market",
      "A market with exactly two mutually exclusive outcomes. One share of the winning side pays "
      "exactly $1 when the market ends; a share of the losing side pays $0. Nothing in between.",
-     "Every market in our dataset is binary: Up wins or Down wins, decided by the actual "
+     "Every market in my dataset is binary: Up wins or Down wins, decided by the actual "
      "Bitcoin/Ethereum/Solana/XRP price move over the market's window.")
 TERM("Resolution (settlement)",
      "The moment the outcome becomes official and shares pay out. Until resolution, prices can "
      "wobble freely; at resolution every share is worth exactly $1 or $0.",
-     "We fetch each market's official resolved outcome from the exchange after it closes — "
+     "I fetch each market's official resolved outcome from the exchange after it closes — "
      "never guessing from the last price. Chapter 5 shows how guessing corrupted an early analysis.")
 P("Here is the key insight. Suppose Up shares trade at $0.72. If you think Up's true chance is "
   "higher than 72%, buying is attractive; if you think it is lower, selling is. The market price "
@@ -193,16 +245,16 @@ TERM("Price = probability",
      "This is why the whole project is really a statistics project: to profit, you must find "
      "moments where the crowd's probability is measurably wrong.")
 FIG("f1_price_path.png",
-    f"Figure 1 — a real {S['path']['asset']} 60-minute market from our recordings, every tick. "
+    f"Figure 1 — a real {S['path']['asset']} 60-minute market from my recordings, every tick. "
     "The price starts near 0.55 (a coin flip with a slight lean), climbs as Bitcoin rises, "
     "wobbles, and locks onto $1.00 as the outcome becomes certain. Reading the y-axis as "
     "\"probability of Up\" turns this chart into a story: the market growing more and more "
     "confident, with moments of doubt along the way.")
-H2("Our dataset")
-P(f"Everything in this book is computed from data we recorded ourselves: <b>{ds['buckets']:,} "
+H2("My dataset")
+P(f"Everything in this book is computed from data I recorded myself: <b>{ds['buckets']:,} "
   f"markets</b> captured tick-by-tick (every order book change and every trade, with millisecond "
   f"timestamps, for both the Up and Down side), {settled_phrase} carrying a verified "
-  "official outcome. That level of detail matters because it lets us simulate trading with the "
+  "official outcome. That level of detail matters because it lets me simulate trading with the "
   "exact prices and quantities that were really available — not optimistic approximations.")
 
 # ============================ CHAPTER 2 ======================================
@@ -223,13 +275,13 @@ TERM("Break-even hit rate",
      "The win rate at which a bet exactly pays for itself. For a binary share it is simply the "
      "price you paid: buy at $0.72 and you break even winning exactly 72% of the time.",
      "This makes analysis wonderfully simple: a strategy profits exactly when its actual win "
-     "rate beats the average price it paid. Everything we test reduces to that comparison.")
+     "rate beats the average price it paid. Everything I test reduces to that comparison.")
 TERM("Edge",
      "How much better you do than break-even: edge = actual win rate - average price paid. "
      "Measured in percentage points (pp). Positive edge = profit; zero = the market priced it "
      "perfectly; negative = you are the one being profited from.",
-     "Our lead strategy wins 82.3% of its bets while paying an average of 72.0 cents — an edge "
-     "of about +10pp. Most strategies we tested had an edge near zero or below.")
+     "My lead strategy wins 82.3% of its bets while paying an average of 72.0 cents — an edge "
+     "of about +10pp. Most strategies I tested had an edge near zero or below.")
 P("Edge is the single number this entire project hunts for. But note what it is NOT: it is not "
   "about winning often. A bet can win rarely and still be brilliant, or win nearly always and "
   "still be terrible, because the price already contains the frequency. The chart below makes "
@@ -245,13 +297,13 @@ FIG("f3_payout.png",
 TERM("Hit rate",
      "The percentage of bets a strategy actually wins. Meaningful only when compared to the "
      "break-even rate (the average price paid).",
-     "A strategy of ours that wins 82% of the time sounds great and IS great — but only because "
+     "A strategy of mine that wins 82% of the time sounds great and IS great — but only because "
      "it pays 72 cents, not 82, for those wins. Another won just 28% and was also (slightly) "
      "profitable, because it paid 26.")
 TERM("Percentage point (pp)",
      "The unit for differences between two percentages. If hit rate is 82.3% and break-even is "
      "72.0%, the edge is 10.3 percentage points (not \"10.3 percent\").",
-     "We write edges as +10pp rather than +10% to avoid ambiguity — +10% of 72 would be 7.2, "
+     "I write edges as +10pp rather than +10% to avoid ambiguity — +10% of 72 would be 7.2, "
      "which is a different number.")
 
 # ============================ CHAPTER 3 ======================================
@@ -278,34 +330,34 @@ TERM("Spread",
      "Ask minus bid — the cost of an instant round trip. Buy and immediately sell and you lose "
      "exactly the spread. Tight spreads mean an active, competitive market; wide spreads make "
      "many small edges untradeable.",
-     "Our simulations refuse any entry where the spread exceeds 5 cents, because an edge "
+     "My simulations refuse any entry where the spread exceeds 5 cents, because an edge "
      "smaller than the spread cannot be harvested by crossing it.")
 TERM("Mid (midpoint)",
-     "The average of bid and ask — the market's fair-value estimate. We use the mid as \"the "
-     "probability\" when deciding whether a rule triggers, but we always CHARGE the real ask "
+     "The average of bid and ask — the market's fair-value estimate. I use the mid as \"the "
+     "probability\" when deciding whether a rule triggers, but I always CHARGE the real ask "
      "when simulating a buy. Confusing these two flatters results.",
-     "An early analysis of ours used mid prices for fills and showed phantom profits; recharging "
+     "An early analysis of mine used mid prices for fills and showed phantom profits; recharging "
      "every fill at the ask removed about 2pp of imaginary edge.")
 TERM("Depth and liquidity",
      "How many shares are waiting at and near the best prices. Deep books absorb big orders "
      "without moving; shallow books mean even modest orders push the price against you.",
-     "Our tick recordings store the full ladder, so the simulator knows exactly how many shares "
+     "My tick recordings store the full ladder, so the simulator knows exactly how many shares "
      "were available at each price at every instant.")
 TERM("Slippage (walking the ladder)",
      "When your order is bigger than the best level, it consumes deeper, worse-priced levels. "
      "Your average fill price ends up worse than the quoted touch price.",
      "In a test with a $10 order against a book quoting 0.30 (20 shares) then 0.31, the fill "
      "averaged 0.3039 — 0.4 cents of slippage, which mechanically shaved the measured edge.")
-WARN("The mistake we made: trusting quoted prices",
-     "Early results looked great partly because we assumed trades filled at the observed price. "
+WARN("The mistake I made: trusting quoted prices",
+     "Early results looked great partly because I assumed trades filled at the observed price. "
      "Real books are sometimes one-sided, thin, or stale. The fix that made every later result "
      "trustworthy: record BOTH sides' full books tick-by-tick, and simulate every fill by "
-     "walking the actual ask ladder for the actual dollar amount. When we did this, one "
+     "walking the actual ask ladder for the actual dollar amount. When I did this, one "
      "\"profitable\" idea reversed sign entirely (Chapter 8).")
 
 # ============================ CHAPTER 4 ======================================
 CH("Is the market beatable? — calibration and efficiency",
-   "The question every strategy secretly asks. Our data answers it twice: once with a "
+   "The question every strategy secretly asks. My data answers it twice: once with a "
    "brick wall, once with an open door.")
 TERM("Calibration",
      "A market is calibrated if things priced at X% really do happen X% of the time. Perfectly "
@@ -317,7 +369,7 @@ TERM("Efficient market",
      "because fast professional traders compete away every mispricing within seconds. In an "
      "efficient market, no simple rule based on the price itself can profit.",
      "The 5-minute markets behave efficiently: across 2,360 recorded markets, every entry rule "
-     "we tested — in both directions — earned about zero or lost money after real fills.")
+     "I tested — in both directions — earned about zero or lost money after real fills.")
 FIG("f4_calibration.png",
     "Figure 4 — the central chart of this book. Each pair of bars asks: when you buy the "
     "leading side at a given price, how often does it actually win (green) versus what you "
@@ -325,7 +377,7 @@ FIG("f4_calibration.png",
     "is calibration; there is nothing to win. Right: 60-minute markets — green exceeds gray at "
     "every single price level. Favorites are systematically UNDERPRICED. That persistent gap "
     "is an edge.")
-P("Why would the hourly market misprice what the 5-minute market prices perfectly? Our working "
+P("Why would the hourly market misprice what the 5-minute market prices perfectly? My working "
   "explanation is attention: the 5-minute markets turn over constantly and are patrolled by "
   "fast automated traders, while the slower hourly markets get less algorithmic scrutiny, "
   "leaving room for a systematic bias — favorites not being trusted quite as much as they "
@@ -334,7 +386,7 @@ TERM("Favorite-longshot bias",
      "A pattern documented for decades in betting markets: bettors systematically overpay for "
      "longshots (low-probability outcomes) and underpay for favorites. It is one of the "
      "best-replicated inefficiencies in the academic literature.",
-     "Our 60-minute finding is a textbook example: buying the favorite side earns +4 to +15 "
+     "My 60-minute finding is a textbook example: buying the favorite side earns +4 to +15 "
      "cents per $1 across every threshold, while buying longshots loses heavily (Figure 7).")
 
 # ============================ CHAPTER 5 ======================================
@@ -348,7 +400,7 @@ P("Flip a fair coin 20 times and you should not be surprised to see 13 or 14 hea
 TERM("Variance and noise",
      "The natural scatter of random outcomes around their true average. The smaller the sample, "
      "the wilder the scatter — and the easier it is to mistake scatter for signal.",
-     "Figure 5 is our own +12.5pp \"discovery\" dissolving into noise as the sample grew 8x.")
+     "Figure 5 is my own +12.5pp \"discovery\" dissolving into noise as the sample grew 8x.")
 TERM("Law of large numbers",
      "As the number of independent observations grows, the measured average converges to the "
      "true average. It is the reason casinos always win eventually — and the reason more data "
@@ -361,14 +413,14 @@ FIG("f5_collapse.png",
     f"significance tests at that size. Measured over all {S['collapse']['n']} bets, the edge "
     f"is {S['collapse']['final_edge']}pp: nothing. Every wiggle in this line is luck arriving "
     "and evaporating. Burn this picture into memory before believing any backtest.")
-TERM("Independent observations (and why ours are fewer than they look)",
+TERM("Independent observations (and why mine are fewer than they look)",
      "Statistical confidence counts INDEPENDENT pieces of evidence. Bets whose outcomes move "
      "together — four crypto coins in the same five minutes, all following Bitcoin — are "
      "partially the SAME piece of evidence, not four.",
-     "We group bets into clock windows: 96 bets on the lead rule collapse to just 31 "
-     "independent windows. All our tests count windows, not bets; ignoring this once made "
+     "I group bets into clock windows: 96 bets on the lead rule collapse to just 31 "
+     "independent windows. All my tests count windows, not bets; ignoring this once made "
      "results look four times more certain than they were.")
-WARN("The mistake we made: believing 90 bets",
+WARN("The mistake I made: believing 90 bets",
      "The +12.5pp rule had passed a latency test, a luck test AND an out-of-sample split — on "
      "~300 markets. At 2,360 markets it was gone. Small samples can fool even correct "
      "procedures, because the procedures themselves only see the data they are given. The only "
@@ -382,14 +434,14 @@ TERM("Null hypothesis",
      "The boring explanation you must rule out first: \"there is no edge; the results are "
      "chance.\" Statistical testing means asking how surprising your data would be if the "
      "boring explanation were true.",
-     "For every rule we test, the null hypothesis is that its true profit per bet is zero "
+     "For every rule I test, the null hypothesis is that its true profit per bet is zero "
      "or negative.")
 TERM("Bootstrap (resampling)",
      "A way to measure luck without formulas: rebuild your dataset thousands of times by "
      "randomly re-drawing from your own results (with repetition allowed), recomputing the "
      "answer each time. The spread of those thousands of answers shows how much your result "
      "could wobble by chance alone.",
-     "Figure 6 shows 4,000 such reconstructions of our lead rule. We resample whole clock "
+     "Figure 6 shows 4,000 such reconstructions of my lead rule. I resample whole clock "
      "windows rather than single bets, so correlated coins are never counted as independent "
      "evidence (a 'block bootstrap').")
 FIG("f6_bootstrap.png",
@@ -403,23 +455,23 @@ TERM("p-value",
      "The probability of seeing a result at least as good as yours if the null hypothesis "
      "(pure luck) were true. Small p-value = luck is an implausible explanation. The common "
      "bar is p < 0.05, i.e. luck would produce this less than once in twenty tries.",
-     f"Our lead rule: p = {S['bootstrap']['p_le_zero']:.3f}. Chance produces a result this "
+     f"My lead rule: p = {S['bootstrap']['p_le_zero']:.3f}. Chance produces a result this "
      "good about 2% of the time — unlikely, though not impossible. Compare: the collapsed "
      "5-minute rule of Figure 5 also once showed p = 0.043 on its small sample. p-values "
      "are evidence, not proof.")
 TERM("Confidence interval (the 90% band)",
      "The range that contains the true value with stated confidence, given your data. A band "
-     "that excludes zero is the visual version of a small p-value. Wide bands mean 'we do not "
+     "that excludes zero is the visual version of a small p-value. Wide bands mean 'I do not "
      "know much yet' regardless of how good the central number looks.",
      f"The lead rule's 90% band is [+{S['bootstrap']['lo90']}, +{S['bootstrap']['hi90']}] "
      "cents — comfortably above zero, but its width (a factor of ~7) honestly reports how "
-     "few independent windows we have.")
+     "few independent windows I have.")
 WARN("Multiple comparisons: the silent killer",
      "Test 28 rules at the p < 0.05 bar and you EXPECT about 1.4 of them to pass by pure "
      "luck. Scanning a grid and celebrating the best cell is how the +12.5pp illusion was "
      "born. Defenses: pre-commit to one rule before looking, demand the pattern hold across "
      "NEIGHBORING cells (a real effect is smooth, luck is spiky), and retest on fresh data. "
-     "Our 60-minute result is green across the entire grid — not one lucky cell.")
+     "My 60-minute result is green across the entire grid — not one lucky cell.")
 
 # ============================ CHAPTER 7 ======================================
 CH("Not fooling yourself — overfitting, splits and regimes",
@@ -429,13 +481,13 @@ TERM("Overfitting",
      "Tuning a strategy until it fits the accidents of your particular dataset rather than a "
      "real, repeating phenomenon. An overfit strategy aces the past and fails the future.",
      "Sweeping 7 thresholds x 4 entry windows and picking the best cell is mild overfitting "
-     "by construction — the winner is partly 'best' by luck. That is why we validate the "
+     "by construction — the winner is partly 'best' by luck. That is why I validate the "
      "whole neighborhood, never the single best cell.")
 TERM("In-sample vs out-of-sample",
      "In-sample: the data you used to find the rule. Out-of-sample: fresh data the rule has "
      "never seen. Only out-of-sample performance predicts the future; in-sample performance "
      "mostly measures how hard you searched.",
-     "Our chronological split: does a rule earn money in BOTH the first and second half of "
+     "My chronological split: does a rule earn money in BOTH the first and second half of "
      "the recording period independently?")
 FIG("f7_split.png",
     f"Figure 7 — the split test on four rules. The 60-minute rules earn in both halves "
@@ -448,9 +500,9 @@ TERM("Regime",
      "A prevailing market mood — trending vs choppy, calm vs volatile — that can switch "
      "without warning. A strategy's true edge can be genuinely different in different regimes, "
      "so profits measured in one regime may simply not transfer.",
-     "Momentum strategies naturally earn more in trending periods. Part of our 60-minute "
-     "edge's size likely reflects the specific four days we recorded; direction is consistent, "
-     "but we treat the magnitude as provisional until more regimes are in the data.")
+     "Momentum strategies naturally earn more in trending periods. Part of my 60-minute "
+     "edge's size likely reflects the specific four days I recorded; direction is consistent, "
+     "but I treat the magnitude as provisional until more regimes are in the data.")
 
 # ============================ CHAPTER 8 ======================================
 CH("The two strategies — fading vs riding the move",
@@ -459,7 +511,7 @@ CH("The two strategies — fading vs riding the move",
 TERM("Mean reversion (\"fading\")",
      "Betting that an extreme move will come back: buy whatever crashed, sell whatever spiked. "
      "Profitable only where crowds systematically overreact.",
-     "Our original idea: buy the side that dips early to a low price. With exact fills and "
+     "My original idea: buy the side that dips early to a low price. With exact fills and "
      "real outcomes it loses at EVERY price and EVERY horizon — dips in these markets are "
      "information, not overreaction.")
 TERM("Momentum",
@@ -468,7 +520,7 @@ TERM("Momentum",
      "Buying the strong side of 60-minute markets earns +4 to +15 cents per $1 across the "
      "whole grid (Figure 8, left) — and it is the exact mirror of why fading loses.")
 FIG("f8_heatmaps.png",
-    "Figure 8 — every rule we tested on 60-minute markets, as profit per $1 bet in cents. "
+    "Figure 8 — every rule I tested on 60-minute markets, as profit per $1 bet in cents. "
     "Left (momentum): green nearly everywhere — the effect is broad and smooth, not one "
     "lucky cell. Right (fading): red everywhere, catastrophically so for deep dips (a 10-cent "
     "share that 'might bounce' loses ~half its stake per bet on average). Two panels, one "
@@ -498,14 +550,14 @@ CH("Execution reality — latency, stop-losses and drawdowns",
 TERM("Latency",
      "The delay between seeing a trigger and your order actually reaching the market. If an "
      "edge exists only for the fastest reactor, normal humans and modest bots cannot collect it.",
-     "We re-ran every simulation forcing a 300ms reaction delay — fills happen on the book as "
+     "I re-ran every simulation forcing a 300ms reaction delay — fills happen on the book as "
      "it stands a beat later. The 60-minute edge barely moved (+14.8 cents at the lead cell). "
      "It does not depend on being fast; an hourly trend is not a millisecond phenomenon.")
 TERM("Stop-loss",
      "An exit rule that sells automatically once a position drops below a set level, to cap "
      "the loss on any single trade. Intuitive, protective — and, in a calibrated market, "
      "usually a way to pay for insurance you did not need.",
-     "We tested stops at 0.45 and 0.35 on the 60-minute momentum rule. Both made it WORSE — "
+     "I tested stops at 0.45 and 0.35 on the 60-minute momentum rule. Both made it WORSE — "
      "dramatically (Figure 10).")
 FIG("f9_stops.png",
     "Figure 10 — the same four profitable rules with no stop (green), a loose stop at 0.35 "
@@ -527,18 +579,18 @@ TERM("Take-profit",
      "direction can only subtract.")
 
 # ============================ CHAPTER 10 =====================================
-CH("Where we stand — the road to a live bot",
+CH("Where I stand — the road to a live bot",
    "What four days of ticks, one destroyed illusion and one surviving edge add up to.")
-H2("What we know with confidence")
+H2("What I know with confidence")
 P("(1) The 5-minute markets are efficient — across 2,360 markets, no price-based rule beats "
   "them in either direction after honest fills. (2) Fading dips loses everywhere, at every "
   "horizon. (3) Buying strength on 60-minute markets earned +4 to +15 cents per $1 across "
   "the whole rule grid, survived a 300ms latency handicap, a window-aware luck test "
   "(p = 0.018) and a chronological split — and its exact mirror (the fade losing) supports "
   "the same underlying story: hourly favorites are underpriced.")
-H2("What we do NOT know yet")
+H2("What I do NOT know yet")
 P("The magnitude. The 60-minute evidence rests on ~31 independent windows recorded across "
-  "four days that leaned trending. The direction of the effect is consistent everywhere we "
+  "four days that leaned trending. The direction of the effect is consistent everywhere I "
   "look, but the honest range for its true size is wide (roughly +3 to +25 cents per $1). "
   "Chapter 5 is the permanent reminder of what happens to magnitudes measured on small "
   "samples.")
@@ -547,7 +599,7 @@ P("Step 1, build honest instruments — done: tick recorder (both books), exact-
   "verified real outcomes. Step 2, find and stress-test a candidate — done, with one "
   "casualty (the 5-minute illusion) and one survivor (60-minute momentum). Step 3, keep "
   "collecting across regimes while testing exits — done: stops rejected, hold-to-resolution "
-  "confirmed. <b>Step 4 — where we are now:</b> a paper-trading bot trades the rule live "
+  "confirmed. <b>Step 4 — where I am now:</b> a paper-trading bot trades the rule live "
   "with a demo wallet, filling against real books. Success is pre-defined: after ~50+ "
   "settled trades, its hit rate and profit must land near the replay's expectation "
   "(~72-77 cents paid, ~83-85% won). Step 5, only if paper matches replay: tiny real "
@@ -556,7 +608,7 @@ TERM("Paper trading",
      "Running a strategy live with fake money but real prices, real fills logic and real "
      "outcomes. The final exam before real money: it tests the signal, the execution, the "
      "infrastructure and the traders' nerves, all at zero cost.",
-     "Our paper bot buys the strong side of 15/60-minute markets by walking the live ask "
+     "My paper bot buys the strong side of 15/60-minute markets by walking the live ask "
      "ladder, holds to resolution, and settles on official outcomes — the same pipeline the "
      "replay validated, now facing the future instead of the past.")
 WARN("The three ways this can still fail",
@@ -615,13 +667,23 @@ GLOSS = [
 for term, desc in GLOSS:
     story.append(Paragraph(f"<b>{term}</b> — {desc}", st_gloss))
 
+# ============================ COLOPHON =======================================
+story.append(Spacer(1, 1.4 * cm))
+_box([[Paragraph("About the author", st_term_name)],
+      [Paragraph(f"<b>{AUTHOR}</b> — independent quantitative-research and full-stack "
+                 "engineering project. Every figure and number in this book was produced by my "
+                 "own code from data I recorded, and regenerates automatically as the dataset "
+                 "grows. Full source code and the live dashboard are available on request.",
+                 st_term_body)],
+      [Paragraph(f"Contact: &nbsp;{CONTACT}", st_term_body)]], TERM_BG, TERM_EDGE)
+
 
 # ============================ BUILD ==========================================
 def on_page(canvas, doc):
     canvas.saveState()
     canvas.setFont("Helvetica", 8)
     canvas.setFillColor(colors.HexColor("#8a8a8a"))
-    canvas.drawString(2 * cm, 1.1 * cm, "Trading by the Numbers — a statistics field guide to our Polymarket project")
+    canvas.drawString(2 * cm, 1.1 * cm, f"Trading by the Numbers  ·  {AUTHOR}")
     canvas.drawRightString(A4[0] - 2 * cm, 1.1 * cm, f"{doc.page}")
     canvas.restoreState()
 
@@ -629,8 +691,8 @@ def on_page(canvas, doc):
 doc = BaseDocTemplate(str(OUT), pagesize=A4,
                       leftMargin=2 * cm, rightMargin=2 * cm,
                       topMargin=1.8 * cm, bottomMargin=1.8 * cm,
-                      title="Trading by the Numbers",
-                      author="Polymarket MM research project")
+                      title="Trading by the Numbers — Nitzan Ben Dror",
+                      author=AUTHOR)
 frame = Frame(2 * cm, 1.8 * cm, A4[0] - 4 * cm, A4[1] - 3.6 * cm, id="main")
 doc.addPageTemplates([PageTemplate(id="page", frames=[frame], onPage=on_page)])
 doc.build(story)
