@@ -10,7 +10,7 @@ import styles from "./Layout.module.css";
 const GROUPS: { label: string; items: [string, string][] }[] = [
   { label: "Overview", items: [["/", "Mission Control"]] },
   // The ACTIVE strategy track: momentum on 15/60-min Up/Down markets.
-  { label: "Up/Down Bot", items: [["/hdlab", "HD Lab (record · replay)"]] },
+  { label: "Up/Down Bot", items: [["/hdlab", "HD Lab (record · replay)"], ["/wallet", "Paper Wallet"]] },
   // The original market-making platform — parked, kept working for later.
   { label: "Market Making (parked)", items: [
     ["/explorer", "Market Explorer"], ["/book", "Live Order Book"], ["/lab", "Strategy Lab"],

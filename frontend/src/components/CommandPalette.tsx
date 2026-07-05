@@ -10,7 +10,7 @@ import { useToast } from "./Toast";
 import styles from "./CommandPalette.module.css";
 
 const PAGES: [string, string][] = [
-  ["/", "Mission Control"], ["/hdlab", "HD Lab (Up/Down bot)"],
+  ["/", "Mission Control"], ["/hdlab", "HD Lab (Up/Down bot)"], ["/wallet", "Paper Wallet"],
   ["/explorer", "Market Explorer"], ["/book", "Live Order Book"],
   ["/lab", "Strategy Lab"], ["/analytics", "Backtest & Analytics"], ["/sweep", "Parameter Sweep"],
   ["/recorder", "Book Recorder"], ["/learn", "Learn / Glossary"], ["/trading", "Live Trading"],

@@ -39,11 +39,16 @@ def entry_windows(window_len: int) -> list[int]:
 
 @dataclass
 class FillCfg:
-    """How an entry is executed against the recorded book."""
+    """How an entry (and optional exit) is executed against the recorded book."""
     stake: float = 1.0          # dollars to deploy per bet
     max_spread: float = 1.0     # only fill if the taken side's spread ≤ this (1.0 = off)
     latency_ms: float = 0.0     # react this many ms after the trigger (fill on the later book)
     min_fill_frac: float = 0.0  # require ≥ this fraction of the stake to actually fill, else skip
+    # Exit overlay (None = hold to resolution). After entry, if the HELD side's own
+    # mid crosses these, we SELL into its real bid ladder (partial fills allowed —
+    # whatever the book can't absorb rides to resolution).
+    stop_mid: float | None = None   # sell if the held side's mid ≤ this (stop-loss)
+    take_mid: float | None = None   # sell if the held side's mid ≥ this (take-profit)
 
 
 def peek_meta(path: str | Path) -> dict | None:
@@ -113,6 +118,26 @@ def walk_asks(levels: list[tuple[float, float]], stake: float) -> tuple[float, f
             break
     avg = spent / shares if shares > 0 else None
     return shares, spent, avg
+
+
+def walk_bids(levels: list[tuple[float, float]], shares: float) -> tuple[float, float, float | None]:
+    """Sell up to `shares` into the bid ladder (best price first).
+
+    Returns (shares_sold, proceeds, avg_price). Sells whole levels until the
+    remaining shares don't cover the next one, then a partial slice — whatever the
+    book can't absorb stays with the seller (a realistic partial exit).
+    """
+    sold = proceeds = 0.0
+    remaining = shares
+    for price, size in levels:
+        if price <= 0 or size <= 0 or remaining <= 0:
+            continue
+        take = min(size, remaining)
+        sold += take
+        proceeds += take * price
+        remaining -= take
+    avg = proceeds / sold if sold > 0 else None
+    return sold, proceeds, avg
 
 
 def _apply(ev: dict, books: dict[str, LocalOrderBook]) -> None:
@@ -194,13 +219,42 @@ def replay_bucket(meta: dict, events: list[dict], resolution: dict | None,
                     continue
                 won = (st["side"] == winner) if winner else None
                 touch = book.best_ask
-                st["phase"] = "done"
-                st["result"] = {
+                result = {
                     "entered": True, "side": st["side"], "shares": shares, "spent": spent,
                     "avg": avg, "fill_frac": frac, "touch": touch,
                     "slippage": (avg - touch) if touch is not None else None,
                     "won": won, "elapsed": st["trig_elapsed"],
                     "pnl": (shares - spent) if won else (-spent if won is not None else None),
+                    "exit": None,
                 }
+                if cfg.stop_mid is not None or cfg.take_mid is not None:
+                    st["phase"] = "holding"   # keep watching the held side for an exit
+                    st["result"] = result
+                else:
+                    st["phase"] = "done"
+                    st["result"] = result
+
+            if st["phase"] == "holding":
+                # Exit check on the HELD side's own book. Sell into its bid ladder;
+                # anything the book can't absorb rides to resolution.
+                book = books[st["tid"]]
+                mid = book.midpoint
+                if mid is None:
+                    continue
+                hit_stop = cfg.stop_mid is not None and mid <= cfg.stop_mid
+                hit_take = cfg.take_mid is not None and mid >= cfg.take_mid
+                if not (hit_stop or hit_take):
+                    continue
+                res = st["result"]
+                sold, proceeds, sell_avg = walk_bids(book.bid_levels(50), res["shares"])
+                left = res["shares"] - sold
+                settle = None if res["won"] is None else (left if res["won"] else 0.0)
+                res.update(
+                    exit="stop" if hit_stop else "take",
+                    exit_elapsed=elapsed, exit_mid=mid, exit_avg=sell_avg,
+                    shares_sold=sold, proceeds=proceeds,
+                    pnl=(proceeds + settle - res["spent"]) if settle is not None else None,
+                )
+                st["phase"] = "done"
 
     return {r: (state[r]["result"] or {"entered": False}) for r in rules}

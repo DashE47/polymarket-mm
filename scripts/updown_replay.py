@@ -76,6 +76,10 @@ def main() -> int:
     ap.add_argument("--min-fill-frac", type=float, default=0.0, help="require ≥ this fraction of stake to fill")
     ap.add_argument("--mode", choices=["fade", "momentum"], default="fade",
                     help="fade = buy the cheap side ≤ thr; momentum = buy the strong side ≥ thr")
+    ap.add_argument("--stop-mid", type=float, default=None,
+                    help="exit overlay: sell (into the real bid ladder) if the held side's mid ≤ this")
+    ap.add_argument("--take-mid", type=float, default=None,
+                    help="exit overlay: sell if the held side's mid ≥ this (take profit)")
     ap.add_argument("--detail", default="", help="'thr,win' → per-bucket fills + equity for that rule")
     ap.add_argument("--null", action="store_true",
                     help="block-bootstrap each rule's P&L/bet (resamples whole clock-windows) to "
@@ -89,7 +93,8 @@ def main() -> int:
     windows_min = [max(1, round(args.window_len * f)) for f in (0.2, 0.4, 0.6, 0.8)]
     rules = [(thr, w) for thr in thresholds for w in windows_min]
     cfg = FillCfg(stake=args.stake, max_spread=args.max_spread,
-                  latency_ms=args.latency_ms, min_fill_frac=args.min_fill_frac)
+                  latency_ms=args.latency_ms, min_fill_frac=args.min_fill_frac,
+                  stop_mid=args.stop_mid, take_mid=args.take_mid)
 
     detail_rule = None
     if args.detail:
@@ -111,7 +116,7 @@ def main() -> int:
             pass
 
     agg = {r: {"n": 0, "wins": 0, "pnl": 0.0, "paid": 0.0, "frac": 0.0, "slip": 0.0,
-               "entered": 0, "unsettled": 0} for r in rules}
+               "entered": 0, "unsettled": 0, "exits": 0} for r in rules}
     bet_records: dict[tuple[float, int], list[tuple[str, float]]] = {r: [] for r in rules}
     src_count = {"gamma": 0, "last_mid_fallback": 0, "unresolved": 0}
     detail_rows = []
@@ -147,6 +152,7 @@ def main() -> int:
             a["paid"] += res["avg"]
             a["frac"] += res["fill_frac"]
             a["slip"] += res["slippage"] or 0.0
+            a["exits"] += 1 if res.get("exit") else 0
             # window_key = the shared clock window (end_ts) — assets resolving at the
             # same instant are correlated, so the bootstrap resamples by this, not per-bet.
             # Kept as a float (not str) so --split can sort bets chronologically too.
@@ -160,7 +166,9 @@ def main() -> int:
     print(f"Exact-fill replay [{args.mode.upper()}: {trig}] — {used} {args.window_len}-min recordings from {args.dir}")
     print(f"resolution source: {src_count}   (gamma = truly settled)")
     print(f"stake ${args.stake:g} · max_spread {args.max_spread} · latency {args.latency_ms:g}ms "
-          f"· min_fill_frac {args.min_fill_frac:g}")
+          f"· min_fill_frac {args.min_fill_frac:g}"
+          + (f" · stop_mid {args.stop_mid}" if args.stop_mid is not None else "")
+          + (f" · take_mid {args.take_mid}" if args.take_mid is not None else ""))
 
     if args.null:
         print(f"\nNULL TEST — block bootstrap (resample whole {args.window_len}-min clock-windows), 5000 iters")
@@ -213,10 +221,10 @@ def main() -> int:
         print("If it flips sign or collapses across the split, it's a fluke / one-regime effect.")
         return 0
 
-    print("=" * 86)
+    print("=" * 92)
     print(f"{'thr':>5} {'win':>4} {'bets':>5} {'fill%':>6} {'hit%':>6} {'paid%':>6} "
-          f"{'slip¢':>6} {'edge_pp':>8} {'P&L/bet':>8}")
-    print("-" * 86)
+          f"{'slip¢':>6} {'exit%':>6} {'edge_pp':>8} {'P&L/bet':>8}")
+    print("-" * 92)
     rows = []
     for r in rules:
         a = agg[r]
@@ -227,11 +235,12 @@ def main() -> int:
         paid = a["paid"] / n * 100
         fillp = a["frac"] / n * 100
         slipc = a["slip"] / n * 100
-        rows.append((r[0], r[1], n, fillp, hit, paid, slipc, hit - paid, a["pnl"] / n))
-    for thr, win, n, fillp, hit, paid, slipc, edge, pnlpb in sorted(rows, key=lambda x: -x[7]):
-        flag = "  ← small" if n < MIN_SAMPLE else ("  ★" if edge > 2 else "")
+        rows.append((r[0], r[1], n, fillp, hit, paid, slipc, a["exits"] / n * 100,
+                     hit - paid, a["pnl"] / n))
+    for thr, win, n, fillp, hit, paid, slipc, exitp, edge, pnlpb in sorted(rows, key=lambda x: -x[9]):
+        flag = "  ← small" if n < MIN_SAMPLE else ("  ★" if pnlpb > 0.02 else "")
         print(f"{thr:>5.2f} {win:>4} {n:>5} {fillp:>5.0f}% {hit:>6.1f} {paid:>6.1f} "
-              f"{slipc:>+6.1f} {edge:>+8.1f} {pnlpb:>+8.3f}{flag}")
+              f"{slipc:>+6.1f} {exitp:>5.0f}% {edge:>+8.1f} {pnlpb:>+8.3f}{flag}")
     print("=" * 86)
     print("fill% = avg fraction of the stake actually filled · slip¢ = avg cost above the")
     print("touch from walking the ladder · edge/P&L now reflect EXACT execution + real")

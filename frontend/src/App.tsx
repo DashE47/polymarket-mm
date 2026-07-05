@@ -7,6 +7,7 @@ import StrategyLab from "./pages/StrategyLab";
 import Analytics from "./pages/Analytics";
 import Sweep from "./pages/Sweep";
 import HDLab from "./pages/HDLab";
+import Wallet from "./pages/Wallet";
 import Recorder from "./pages/Recorder";
 import Learn from "./pages/Learn";
 import TradingDisabled from "./pages/TradingDisabled";
@@ -22,6 +23,7 @@ export default function App() {
         <Route path="/analytics" element={<Analytics />} />
         <Route path="/sweep" element={<Sweep />} />
         <Route path="/hdlab" element={<HDLab />} />
+        <Route path="/wallet" element={<Wallet />} />
         <Route path="/recorder" element={<Recorder />} />
         <Route path="/learn" element={<Learn />} />
         <Route path="/trading" element={<TradingDisabled />} />

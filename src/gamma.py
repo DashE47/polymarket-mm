@@ -263,3 +263,30 @@ def get_market(condition_id: str) -> Market | None:
     if not rows:
         return None
     return _to_market(rows[0])
+
+
+def settled_winner(condition_id: str) -> str | None:
+    """The RESOLVED outcome of a closed market, or None if not settled yet.
+
+    Gamma's /markets hides closed markets unless closed=true is passed, and these
+    short-term markets settle minutes-to-hours after their end time — so poll this
+    after close until it returns a name (e.g. 'Up' / 'Down').
+    """
+    data = get_json(
+        f"{SETTINGS.gamma_host}/markets",
+        params={"condition_ids": condition_id, "closed": "true", "limit": 1},
+    )
+    rows = data if isinstance(data, list) else data.get("data", [])
+    if not rows or not bool(rows[0].get("closed")):
+        return None
+    outs = _parse_json_list(rows[0].get("outcomes"))
+    prices = _parse_json_list(rows[0].get("outcomePrices"))
+    opx: dict[str, float] = {}
+    for o, p in zip(outs, prices):
+        try:
+            opx[o] = float(p)
+        except (TypeError, ValueError):
+            pass
+    if not opx or max(opx.values()) < 0.99:
+        return None  # closed but not decisively priced yet
+    return max(opx, key=opx.get)

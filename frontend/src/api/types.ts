@@ -174,6 +174,44 @@ export interface HDEquity {
   rows: HDEquityRow[];
 }
 
+// --- paper trading (demo wallet) -------------------------------------------
+export interface PaperPosition {
+  ts: string;
+  asset: string;
+  window_min: number;
+  side: string;
+  shares: number;
+  spent: number;
+  avg: number;
+  end_ts: number;
+  question: string;
+}
+
+export interface PaperTradeRow {
+  ts: string;
+  asset: string | null;
+  window_min: number | null;
+  side: string | null;
+  avg: number | null;
+  spent: number | null;
+  winner: string;
+  won: boolean;
+  pnl: number;
+  balance_after: number;
+}
+
+export interface PaperStatus {
+  daemon: { running: boolean; uptime_s: number | null; args: { windows: number[]; stake: number } | null };
+  wallet: { balance: number; start_balance: number; created: string; updated?: string } | null;
+  open_positions: PaperPosition[];
+  trades: number;
+  wins: number;
+  hit: number | null;
+  realized_pnl: number;
+  history: PaperTradeRow[];
+  equity: { ts: string; balance: number }[];
+}
+
 // WebSocket frames
 export interface BookFrame {
   best_bid: number | null;

@@ -40,9 +40,11 @@ from src.orderbook import LocalOrderBook  # noqa: E402
 from src.strategy import StrategyConfig  # noqa: E402
 
 from api.hd import router as hd_router  # noqa: E402  (HD record/resolve/replay endpoints)
+from api.paper import router as paper_router  # noqa: E402  (demo-wallet paper trading)
 
 app = FastAPI(title="Polymarket MM API", version="1.0")
 app.include_router(hd_router)
+app.include_router(paper_router)
 
 # Allow a local frontend dev server (React/Vite/Next on localhost) to call us.
 app.add_middleware(

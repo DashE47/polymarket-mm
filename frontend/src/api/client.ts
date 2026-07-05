@@ -2,8 +2,8 @@
 // proxy at /api (-> the API server); WebSockets go through /ws (same origin).
 
 import type {
-  BacktestResult, Book, HDEquity, HDGrid, HDJob, HDSummary, Market, RecordingStatus,
-  RunSummary, Stats, StrategyParams, SweepRow,
+  BacktestResult, Book, HDEquity, HDGrid, HDJob, HDSummary, Market, PaperStatus,
+  RecordingStatus, RunSummary, Stats, StrategyParams, SweepRow,
 } from "./types";
 
 export interface HDReplayParams {
@@ -69,6 +69,11 @@ export const api = {
     getJSON<HDGrid>(`/hd/replay/grid?mode=${mode}&window_len=${windowLen}&${hdQuery(p)}`),
   hdEquity: (mode: string, windowLen: number, thr: number, win: number, p: HDReplayParams) =>
     getJSON<HDEquity>(`/hd/replay/equity?mode=${mode}&window_len=${windowLen}&thr=${thr}&win=${win}&${hdQuery(p)}`),
+  paperStatus: () => getJSON<PaperStatus>("/paper/status"),
+  paperStart: (windows: number[], stake: number) =>
+    postJSON<PaperStatus["daemon"]>("/paper/start", { windows, stake }),
+  paperStop: () => postJSON<PaperStatus["daemon"]>("/paper/stop", {}),
+  paperLog: (lines = 20) => getJSON<{ lines: string[] }>(`/paper/log?lines=${lines}`),
 };
 
 // --- WebSocket URLs (same origin; Vite proxies /ws to the API) ------------
