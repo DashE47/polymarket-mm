@@ -39,11 +39,6 @@ from src.gamma import Market  # noqa: E402
 from src.orderbook import LocalOrderBook  # noqa: E402
 from src.strategy import StrategyConfig  # noqa: E402
 
-# Reuse the EXACT offline Up/Down analyzer (scripts/updown_analyze.py) so the live
-# page and the CLI can never drift apart — one source of truth for the bet logic.
-sys.path.insert(0, str(PROJECT_ROOT / "scripts"))
-import updown_analyze as ua  # noqa: E402
-
 from api.hd import router as hd_router  # noqa: E402  (HD record/resolve/replay endpoints)
 
 app = FastAPI(title="Polymarket MM API", version="1.0")
@@ -227,115 +222,6 @@ def recordings() -> list[dict]:
         {"name": p.name, "size_kb": round(p.stat().st_size / 1024, 1)}
         for p in sorted(d.glob("*.jsonl"), reverse=True)
     ]
-
-
-# --- up/down study (live view over the collected updown_*.jsonl data) ------
-
-UPDOWN_DIR = PROJECT_ROOT / "data" / "updown"
-
-
-def _updown_windows(window_len: int) -> list[int]:
-    """Entry windows scaled to the bucket: first 20/40/60/80% of its life."""
-    return [max(1, round(window_len * f)) for f in (0.2, 0.4, 0.6, 0.8)]
-
-
-def _updown_load(file: str | None, window_len: int):
-    """(path, buckets) for the chosen (or newest) file, filtered to `window_len`."""
-    files = sorted(UPDOWN_DIR.glob("updown_*.jsonl")) if UPDOWN_DIR.exists() else []
-    if not files:
-        raise HTTPException(status_code=404, detail="no Up/Down data yet — run updown_collect.py")
-    if file:
-        path = UPDOWN_DIR / file
-        if path.parent != UPDOWN_DIR or not path.exists():
-            raise HTTPException(status_code=404, detail=f"no such data file: {file}")
-    else:
-        path = files[-1]
-    target = window_len * 60
-    buckets = [b for b in ua.load(path) if abs(b.get("dur_s", 0) - target) <= 60]
-    return path, buckets
-
-
-@app.get("/updown/files")
-def updown_files() -> list[dict]:
-    if not UPDOWN_DIR.exists():
-        return []
-    return [
-        {"name": p.name, "size_kb": round(p.stat().st_size / 1024, 1), "mtime": int(p.stat().st_mtime)}
-        for p in sorted(UPDOWN_DIR.glob("updown_*.jsonl"), reverse=True)
-    ]
-
-
-@app.get("/updown/grid")
-def updown_grid(window_len: int = 5, max_spread: float = 0.05, fill_lag: float = 0.0,
-                min_size: float = 0.0, file: str | None = None) -> dict:
-    """The edge grid (threshold × entry-window) over the collected data — the live
-    version of `updown_analyze.py`. edge = hit% − avg price paid, in pp."""
-    path, buckets = _updown_load(file, window_len)
-    windows = _updown_windows(window_len)
-    grid = []
-    for thr in ua.THRESHOLDS:
-        row = []
-        for w in windows:
-            n, wins, pnl, esum = ua.evaluate(buckets, thr, w, max_spread, fill_lag, None, min_size)
-            row.append({
-                "edge": round((wins / n - esum / n) * 100, 2) if n else None,
-                "bets": n,
-                "pnl_per_bet": round(pnl / n, 4) if n else None,
-            })
-        grid.append(row)
-    by_asset: dict[str, int] = {}
-    up = 0
-    for b in buckets:
-        by_asset[b["asset"]] = by_asset.get(b["asset"], 0) + 1
-        up += 1 if b["winner"] == "Up" else 0
-    return {
-        "file": path.name,
-        "updated": int(path.stat().st_mtime),
-        "window_len": window_len,
-        "buckets": len(buckets),
-        "by_asset": by_asset,
-        "base_up_rate": round(up / len(buckets), 4) if buckets else None,
-        "thresholds": ua.THRESHOLDS,
-        "windows": windows,
-        "grid": grid,
-        "min_sample": ua.MIN_SAMPLE,
-    }
-
-
-@app.get("/updown/equity")
-def updown_equity(thr: float, win: int, window_len: int = 5, max_spread: float = 0.05,
-                  fill_lag: float = 0.0, min_size: float = 0.0, file: str | None = None) -> dict:
-    """Cumulative-P&L (equity) curve for one rule, bets in chronological order."""
-    path, buckets = _updown_load(file, window_len)
-    recs = []
-    for b in buckets:
-        bet = ua._bet_for_bucket(b, thr, win, max_spread, fill_lag, min_size)
-        if not bet:
-            continue
-        side, price = bet
-        won = side == b["winner"]
-        recs.append((b.get("end", ""), (1 - price) / price if won else -1.0, won))
-    recs.sort(key=lambda r: r[0])
-    cum = peak = maxdd = 0.0
-    wins = 0
-    series = []
-    for _end, pnl, won in recs:
-        cum += pnl
-        wins += 1 if won else 0
-        peak = max(peak, cum)
-        maxdd = max(maxdd, peak - cum)
-        series.append(round(cum, 3))
-    n = len(recs)
-    return {
-        "thr": thr, "win": win, "n": n, "wins": wins,
-        "hit": round(wins / n * 100, 1) if n else None,
-        "final": round(cum, 2) if n else 0.0,
-        "per_bet": round(cum / n, 3) if n else None,
-        "max_drawdown": round(maxdd, 2),
-        "first": recs[0][0][:10] if recs else None,
-        "last": recs[-1][0][:10] if recs else None,
-        "cum": series,
-    }
 
 
 # --- backtest / sweep (run in a worker thread — these are sync `def`) ------

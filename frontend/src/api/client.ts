@@ -3,7 +3,7 @@
 
 import type {
   BacktestResult, Book, HDEquity, HDGrid, HDJob, HDSummary, Market, RecordingStatus,
-  RunSummary, Stats, StrategyParams, SweepRow, UpDownEquity, UpDownFile, UpDownGrid,
+  RunSummary, Stats, StrategyParams, SweepRow,
 } from "./types";
 
 export interface HDReplayParams {
@@ -15,18 +15,6 @@ export interface HDReplayParams {
 
 const hdQuery = (p: HDReplayParams) =>
   `stake=${p.stake}&max_spread=${p.max_spread}&latency_ms=${p.latency_ms}&min_fill_frac=${p.min_fill_frac}`;
-
-export interface UpDownParams {
-  window_len: number;
-  max_spread: number;
-  fill_lag: number;
-  min_size: number;
-  file?: string;
-}
-
-const updownQuery = (p: UpDownParams) =>
-  `window_len=${p.window_len}&max_spread=${p.max_spread}&fill_lag=${p.fill_lag}` +
-  `&min_size=${p.min_size}${p.file ? `&file=${encodeURIComponent(p.file)}` : ""}`;
 
 const BASE = "/api";
 
@@ -81,10 +69,6 @@ export const api = {
     getJSON<HDGrid>(`/hd/replay/grid?mode=${mode}&window_len=${windowLen}&${hdQuery(p)}`),
   hdEquity: (mode: string, windowLen: number, thr: number, win: number, p: HDReplayParams) =>
     getJSON<HDEquity>(`/hd/replay/equity?mode=${mode}&window_len=${windowLen}&thr=${thr}&win=${win}&${hdQuery(p)}`),
-  updownFiles: () => getJSON<UpDownFile[]>("/updown/files"),
-  updownGrid: (p: UpDownParams) => getJSON<UpDownGrid>(`/updown/grid?${updownQuery(p)}`),
-  updownEquity: (p: UpDownParams & { thr: number; win: number }) =>
-    getJSON<UpDownEquity>(`/updown/equity?thr=${p.thr}&win=${p.win}&${updownQuery(p)}`),
 };
 
 // --- WebSocket URLs (same origin; Vite proxies /ws to the API) ------------

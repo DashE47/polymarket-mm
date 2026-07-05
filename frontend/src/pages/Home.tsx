@@ -1,4 +1,6 @@
-// Cockpit dashboard: at-a-glance KPIs, a live watchlist, and recent runs.
+// Mission Control: what we're building, what's proven dead vs. alive, the live
+// dataset status, and where we are on the road to a profitable bot. The verdicts
+// below are maintained by hand as research concludes — they ARE the project memory.
 
 import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
@@ -10,46 +12,95 @@ import Sparkline from "../components/Sparkline";
 import StarButton from "../components/StarButton";
 import styles from "./Home.module.css";
 
+// Findings from the 16GB / 3,344-bucket exact-fill study (July 2026).
+const VERDICTS: { tag: "lead" | "maybe" | "dead" | "parked"; name: string; why: string }[] = [
+  { tag: "lead", name: "60-min momentum", why: "buy the strong side (≥0.60–0.75) mid-market: +8–16¢/bet, passed significance + time-split — needs more data to confirm size (only ~190 buckets)" },
+  { tag: "maybe", name: "15-min momentum", why: "high thresholds (≥0.85) late-window: +3–4¢/bet, passed both tests — smaller edge, decent sample" },
+  { tag: "dead", name: "5-min (any strategy)", why: "market proven efficient on 2,360 buckets — momentum & fade both ≈0 or negative. Stopped recording it." },
+  { tag: "dead", name: "Fade the dip (all horizons)", why: "dips continue rather than revert — uniformly −1.5 to −13pp with exact fills. Entry is −EV; no exit rule can rescue a bad entry." },
+  { tag: "parked", name: "Market making (spread capture)", why: "the original platform below — engine works, edge never validated. Revisit after the momentum bot." },
+];
+
+const STEPS: { label: string; state: "done" | "now" | "todo" }[] = [
+  { label: "Build honest instruments (tick recorder, exact-fill replay, real settlement)", state: "done" },
+  { label: "Find a candidate edge and stress-test it (latency, luck, time-split)", state: "done" },
+  { label: "Confirm 60-min momentum on more data + build exit rules (sell support)", state: "now" },
+  { label: "Paper-trade with a demo wallet — live signals, simulated fills, tracked P&L", state: "todo" },
+  { label: "Tiny real stakes with kill-switches, scale only if live matches paper", state: "todo" },
+];
+
 export default function Home() {
   const { items } = useWatchlist();
-  const config = useQuery({ queryKey: ["config"], queryFn: api.config });
-  const runs = useQuery({ queryKey: ["runs"], queryFn: () => api.runs(8) });
-
-  const cfg = config.data as { mode?: string; max_daily_loss_usd?: number } | undefined;
-  const lastPnl = runs.data?.[0]?.total_pnl;
+  const hd = useQuery({ queryKey: ["hdSummary"], queryFn: api.hdSummary, refetchInterval: 10000 });
+  const runs = useQuery({ queryKey: ["runs"], queryFn: () => api.runs(5) });
+  const s = hd.data;
 
   return (
     <div className="col">
-      <h1>Dashboard</h1>
-      <p className="muted">Your cockpit — watchlist, recent runs, and setup at a glance. Press <kbd>⌘K</kbd> to jump anywhere.</p>
+      <h1>Mission Control</h1>
+      <p className="muted">
+        Goal: a bot with a <em>proven</em> edge on Polymarket. Everything here is simulation-only until
+        the ladder below says otherwise. Press <kbd>⌘K</kbd> to jump anywhere.
+      </p>
 
+      {/* --- live dataset / research status --- */}
       <div className={styles.kpis}>
-        <Kpi label="Markets watched" value={String(items.length)} />
-        <Kpi label="Last run P&L"
-             value={lastPnl !== undefined ? `${lastPnl >= 0 ? "+" : ""}${lastPnl.toFixed(2)}` : "—"}
-             cls={lastPnl !== undefined ? (lastPnl >= 0 ? "pos" : "neg") : ""} />
-        <Kpi label="Mode" value={cfg?.mode ?? "…"} />
-        <Kpi label="Max daily loss" value={cfg ? `$${cfg.max_daily_loss_usd}` : "…"} />
+        <Kpi label="Recordings (15m / 60m / 5m)" value={s ? `${s.by_window["15"] ?? 0} / ${s.by_window["60"] ?? 0} / ${s.by_window["5"] ?? 0}` : "…"} />
+        <Kpi label="Settled outcomes" value={s ? `${s.resolved}` : "…"} />
+        <Kpi label="Data on disk" value={s ? `${(s.size_mb / 1000).toFixed(1)} GB` : "…"} />
+        <Kpi label="Recorder" value={s ? (s.recorder.running || s.recent_writes > 0 ? "live" : "off") : "…"}
+             cls={s && (s.recorder.running || s.recent_writes > 0) ? "pos" : "muted"} />
       </div>
 
-      <div className="col">
-        <h2>★ Watchlist</h2>
-        {items.length === 0 ? (
-          <div className="card muted">
-            No markets yet — star markets in the <Link to="/explorer">Explorer</Link> to track them here live.
-          </div>
-        ) : (
+      {/* --- strategy verdicts --- */}
+      <div className="card col">
+        <div className="row spread center">
+          <h2 style={{ margin: 0 }}>Strategy verdicts</h2>
+          <Link to="/hdlab" className="small">open HD Lab →</Link>
+        </div>
+        <div className={styles.verdicts}>
+          {VERDICTS.map((v) => (
+            <div key={v.name} className={styles.verdict}>
+              <span className={`${styles.vTag} ${{ lead: styles.vLead, maybe: styles.vMaybe, dead: styles.vDead, parked: styles.vParked }[v.tag]}`}>
+                {{ lead: "LEAD", maybe: "PROMISING", dead: "DEAD", parked: "PARKED" }[v.tag]}
+              </span>
+              <span className={styles.vName}>{v.name}</span>
+              <span className={styles.vWhy}>{v.why}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* --- roadmap --- */}
+      <div className="card col">
+        <h2 style={{ margin: 0 }}>Road to a live bot</h2>
+        <div className={styles.steps}>
+          {STEPS.map((st, i) => (
+            <div key={i} className={styles.step}>
+              <span className={`${styles.stepN} ${st.state === "done" ? styles.stepDone : st.state === "now" ? styles.stepNow : ""}`}>
+                {st.state === "done" ? "✓" : i + 1}
+              </span>
+              <span className={st.state === "now" ? "" : "muted"} style={{ fontSize: 14 }}>
+                {st.label} {st.state === "now" && <span className={styles.dot} />}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* --- secondary: watchlist + recent runs (market-making platform) --- */}
+      {items.length > 0 && (
+        <div className="col">
+          <h2>★ Watchlist</h2>
           <div className={styles.grid}>
             {items.map((it) => <WatchTile key={tokenOf(it)} item={it} />)}
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
-      <div className="col">
-        <h2>Recent runs</h2>
-        {!runs.data || runs.data.length === 0 ? (
-          <div className="card muted">No runs yet — try a <Link to="/analytics">backtest</Link> or a <Link to="/lab">live sim</Link>.</div>
-        ) : (
+      {runs.data && runs.data.length > 0 && (
+        <div className="col">
+          <h2>Recent MM sim runs</h2>
           <div className="card">
             <table>
               <thead><tr><th>Run</th><th>Source</th><th>Fills</th><th>P&L</th></tr></thead>
@@ -65,8 +116,8 @@ export default function Home() {
               </tbody>
             </table>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

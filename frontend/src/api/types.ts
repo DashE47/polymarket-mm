@@ -103,32 +103,6 @@ export interface RunSummary {
   source: string;
 }
 
-// --- Up/Down study (live threshold lab) ----------------------------------
-export interface UpDownFile {
-  name: string;
-  size_kb: number;
-  mtime: number;
-}
-
-export interface UpDownCell {
-  edge: number | null; // hit% − paid%, in percentage points
-  bets: number;
-  pnl_per_bet: number | null;
-}
-
-export interface UpDownGrid {
-  file: string;
-  updated: number;
-  window_len: number;
-  buckets: number;
-  by_asset: Record<string, number>;
-  base_up_rate: number | null;
-  thresholds: number[];
-  windows: number[];
-  grid: UpDownCell[][]; // rows = thresholds, cols = windows
-  min_sample: number;
-}
-
 // --- HD research (record → resolve → exact-fill replay) -------------------
 export interface HDJob {
   running: boolean;
@@ -198,20 +172,6 @@ export interface HDEquity {
   max_drawdown: number;
   cum: number[];
   rows: HDEquityRow[];
-}
-
-export interface UpDownEquity {
-  thr: number;
-  win: number;
-  n: number;
-  wins: number;
-  hit: number | null;
-  final: number;
-  per_bet: number | null;
-  max_drawdown: number;
-  first: string | null;
-  last: string | null;
-  cum: number[];
 }
 
 // WebSocket frames

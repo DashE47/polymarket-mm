@@ -6,7 +6,6 @@ import OrderBook from "./pages/OrderBook";
 import StrategyLab from "./pages/StrategyLab";
 import Analytics from "./pages/Analytics";
 import Sweep from "./pages/Sweep";
-import UpDownLab from "./pages/UpDownLab";
 import HDLab from "./pages/HDLab";
 import Recorder from "./pages/Recorder";
 import Learn from "./pages/Learn";
@@ -22,7 +21,6 @@ export default function App() {
         <Route path="/lab" element={<StrategyLab />} />
         <Route path="/analytics" element={<Analytics />} />
         <Route path="/sweep" element={<Sweep />} />
-        <Route path="/updown" element={<UpDownLab />} />
         <Route path="/hdlab" element={<HDLab />} />
         <Route path="/recorder" element={<Recorder />} />
         <Route path="/learn" element={<Learn />} />

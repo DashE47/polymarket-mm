@@ -10,10 +10,10 @@ import { useToast } from "./Toast";
 import styles from "./CommandPalette.module.css";
 
 const PAGES: [string, string][] = [
-  ["/", "Home & Safety"], ["/explorer", "Market Explorer"], ["/book", "Live Order Book"],
+  ["/", "Mission Control"], ["/hdlab", "HD Lab (Up/Down bot)"],
+  ["/explorer", "Market Explorer"], ["/book", "Live Order Book"],
   ["/lab", "Strategy Lab"], ["/analytics", "Backtest & Analytics"], ["/sweep", "Parameter Sweep"],
-  ["/updown", "Up/Down Lab"], ["/hdlab", "HD Lab"],
-  ["/recorder", "Recorder"], ["/learn", "Learn / Glossary"], ["/trading", "Live Trading"],
+  ["/recorder", "Book Recorder"], ["/learn", "Learn / Glossary"], ["/trading", "Live Trading"],
 ];
 
 type Item =
