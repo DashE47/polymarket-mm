@@ -1,0 +1,20 @@
+.bar { padding: var(--s4) var(--s5); }
+
+.top { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--s4); flex-wrap: wrap; }
+.question { font-size: 16px; font-weight: 700; }
+.priceWrap { text-align: right; }
+.price { font-size: 28px; font-weight: 700; line-height: 1; }
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: var(--s3);
+  margin-top: var(--s4);
+}
+.tile { background: var(--surface-2); border-radius: var(--radius-sm); padding: var(--s3); }
+
+.spark { margin-top: var(--s4); }
+
+@media (max-width: 720px) {
+  .tiles { grid-template-columns: repeat(2, 1fr); }
+}

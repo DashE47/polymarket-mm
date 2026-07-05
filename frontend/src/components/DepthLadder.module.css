@@ -1,0 +1,6 @@
+.ladder { display: flex; flex-direction: column; gap: 3px; }
+.row { display: grid; grid-template-columns: 64px 1fr 80px; align-items: center; gap: var(--s3); }
+.barTrack { height: 18px; background: var(--surface-2); border-radius: 4px; overflow: hidden; }
+.bidBar { height: 100%; background: var(--green-weak); border-left: 3px solid var(--green); }
+.askBar { height: 100%; background: var(--red-weak); border-left: 3px solid var(--red); }
+.divider { height: 1px; background: var(--border-strong); margin: var(--s2) 0; }

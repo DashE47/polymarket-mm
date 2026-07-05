@@ -1,0 +1,36 @@
+# Polymarket CLOB V2 Python client.
+# IMPORTANT: this is the V2 client. The legacy `py-clob-client` (no -v2) only
+# talks to V1 and stopped working against production when Polymarket migrated to
+# CLOB V2 on 2026-04-28. Do not install the legacy package by mistake.
+py_clob_client_v2
+
+# HTTP client for the public Gamma + Data APIs (market discovery, positions).
+# We use `requests` for simple synchronous reads; we wrap it with our own
+# exponential-backoff helper to respect Polymarket's rate limits.
+requests
+
+# Loads PRIVATE_KEY / FUNDER_ADDRESS and other settings from a local .env file
+# so secrets never live in source code.
+python-dotenv
+
+# Synchronous WebSocket client for the live CLOB market feed. We use the
+# callback-style `websocket-client` (imported as `websocket`) because it's
+# simple to read: you give it on_open/on_message handlers and call run_forever().
+websocket-client
+
+# Phase 5 analytics: pandas for the sweep comparison table/CSV, matplotlib for
+# saving PnL / inventory charts to reports/.
+pandas
+matplotlib
+
+# Phase 6 web UI: Streamlit serves the browser app; Plotly draws the interactive
+# in-app charts. (matplotlib is still used for saved PNG reports in src/charts.py.)
+# Streamlit >= 1.37 gives us st.fragment(run_every=...) for live panels.
+streamlit>=1.37
+plotly
+
+# Phase 7 API backend: FastAPI exposes the src/ modules as a REST + WebSocket API
+# (the foundation for a future custom React frontend). uvicorn is the ASGI server;
+# [standard] pulls in the websockets support we need for the live book feed.
+fastapi
+uvicorn[standard]

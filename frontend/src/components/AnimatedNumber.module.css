@@ -1,0 +1,16 @@
+.num { border-radius: 4px; padding: 0 3px; }
+.up { animation: flashUp 700ms var(--ease); }
+.down { animation: flashDown 700ms var(--ease); }
+
+@keyframes flashUp {
+  0% { background: var(--green-weak); color: var(--green); }
+  100% { background: transparent; }
+}
+@keyframes flashDown {
+  0% { background: var(--red-weak); color: var(--red); }
+  100% { background: transparent; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .up, .down { animation: none; }
+}

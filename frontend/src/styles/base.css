@@ -1,0 +1,109 @@
+/*
+ * Base styles + reusable component classes (the "framework" layer).
+ * Page-specific styling lives in *.module.css; shared primitives live here.
+ * Motion is centralised via --dur / --ease for a consistent buttery feel.
+ */
+@import "./tokens.css";
+
+* { box-sizing: border-box; }
+html, body, #root { height: 100%; margin: 0; }
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--bg);
+  background-image: var(--ambient);
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+
+h1, h2, h3 { margin: 0 0 var(--s3); font-weight: 700; line-height: 1.2; letter-spacing: -0.01em; }
+h1 { font-size: 23px; }
+h2 { font-size: 17px; }
+h3 { font-size: 14px; }
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+code, .mono { font-family: var(--font-mono); }
+.muted { color: var(--text-muted); }
+.small { font-size: 12px; }
+.pos { color: var(--green); }
+.neg { color: var(--red); }
+
+/* --- card --- */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  /* frosted glass: blur whatever's behind + a subtle top sheen edge */
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  box-shadow: var(--shadow), inset 0 1px 0 rgba(255, 255, 255, 0.10);
+  padding: var(--s5);
+  transition: background-color var(--dur) var(--ease), border-color var(--dur) var(--ease),
+              box-shadow var(--dur) var(--ease);
+}
+
+/* --- buttons --- */
+.btn {
+  font: inherit;
+  font-weight: 600;
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--text);
+  border-radius: var(--radius-sm);
+  padding: var(--s2) var(--s4);
+  cursor: pointer;
+  transition: background-color var(--dur) var(--ease), border-color var(--dur) var(--ease),
+              transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+.btn:hover:not(:disabled) { background: var(--surface-2); transform: translateY(-1px); box-shadow: var(--shadow); }
+.btn:active:not(:disabled) { transform: translateY(0); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn-primary:hover:not(:disabled) { filter: brightness(1.06); background: var(--accent); }
+.btn-danger { background: var(--red); border-color: var(--red); color: #fff; }
+
+/* --- inputs --- */
+input, select {
+  font: inherit; color: var(--text); background: var(--surface);
+  border: 1px solid var(--border-strong); border-radius: var(--radius-sm);
+  padding: var(--s2) var(--s3);
+  transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+input:focus, select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-weak); }
+label { font-size: 12px; color: var(--text-muted); display: block; margin-bottom: var(--s1); }
+
+/* --- table --- */
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th, td { text-align: left; padding: var(--s2) var(--s3); border-bottom: 1px solid var(--border); }
+th { color: var(--text-muted); font-weight: 600; font-size: 12px; }
+tbody tr { transition: background-color var(--dur) var(--ease); }
+tbody tr:hover { background: var(--surface-2); }
+
+/* --- badges --- */
+.badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px var(--s2); border-radius: 999px; background: var(--surface-2); color: var(--text-muted); }
+.badge-green { background: var(--green-weak); color: var(--green); }
+.badge-red { background: var(--red-weak); color: var(--red); }
+
+/* --- layout helpers --- */
+.row { display: flex; gap: var(--s4); }
+.col { display: flex; flex-direction: column; gap: var(--s4); }
+.grid { display: grid; gap: var(--s4); }
+.wrap { flex-wrap: wrap; }
+.spread { justify-content: space-between; }
+.center { align-items: center; }
+
+/* --- motion: page transitions --- */
+@keyframes fadeUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.page { animation: fadeUp var(--dur) var(--ease); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  .btn:hover { transform: none; }
+}

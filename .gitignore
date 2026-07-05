@@ -1,0 +1,40 @@
+# ---------------------------------------------------------------------------
+# Secrets — NEVER commit these. The .env file holds your private key.
+# ---------------------------------------------------------------------------
+.env
+.env.*
+!.env.example          # keep the template, ignore real env files
+
+# ---------------------------------------------------------------------------
+# Python
+# ---------------------------------------------------------------------------
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+
+# ---------------------------------------------------------------------------
+# Local data caches, logs, and generated reports
+# ---------------------------------------------------------------------------
+data/
+logs/
+reports/
+*.log
+
+# ---------------------------------------------------------------------------
+# A local "kill switch" file. Its mere presence halts all quoting.
+# ---------------------------------------------------------------------------
+KILL
+
+# ---------------------------------------------------------------------------
+# Frontend (React/Vite) build artifacts and dependencies
+# ---------------------------------------------------------------------------
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# IDE config accidentally nested in src/
+src/.idea/

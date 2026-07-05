@@ -1,0 +1,68 @@
+/*
+ * Design tokens. Dark = "liquid glass" on black with neon green/magenta accents
+ * (the default look); light = a clean variant. Components only use var(--token),
+ * so the whole app re-skins from here. Yes/up/profit = green, No/down/loss = magenta.
+ */
+:root {
+  /* light variant */
+  --bg: #eef1f5;
+  --surface: rgba(255, 255, 255, 0.72);
+  --surface-2: rgba(255, 255, 255, 0.55);
+  --border: rgba(20, 30, 45, 0.10);
+  --border-strong: rgba(20, 30, 45, 0.22);
+  --text: #16202a;
+  --text-muted: #5f6b7a;
+
+  --accent: #6a5bff;
+  --accent-weak: rgba(106, 91, 255, 0.14);
+  --green: #0aa05a;          /* Yes / up / profit */
+  --green-weak: rgba(10, 160, 90, 0.14);
+  --red: #d6168a;            /* No / down / loss (magenta) */
+  --red-weak: rgba(214, 22, 138, 0.12);
+  --amber: #b9810f;
+
+  --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 24px; --s6: 32px;
+  --radius: 16px;
+  --radius-sm: 10px;
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "SF Mono", "Cascadia Mono", Consolas, monospace;
+  --shadow: 0 1px 2px rgba(20, 30, 40, 0.06), 0 8px 24px rgba(20, 30, 40, 0.06);
+  --shadow-lift: 0 10px 30px rgba(20, 30, 40, 0.12);
+
+  --glass-blur: 14px;
+  --sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0));
+  --ambient: none;
+
+  --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --dur: 180ms;
+  --sidebar-w: 236px;
+}
+
+:root[data-theme="dark"] {
+  --bg: #050507;            /* near-black */
+  --surface: rgba(255, 255, 255, 0.055);   /* frosted glass */
+  --surface-2: rgba(255, 255, 255, 0.10);
+  --border: rgba(255, 255, 255, 0.12);
+  --border-strong: rgba(255, 255, 255, 0.24);
+  --text: #f3f5fa;
+  --text-muted: #9aa6b6;
+
+  --accent: #7c7bff;
+  --accent-weak: rgba(124, 123, 255, 0.20);
+  --green: #00e58c;         /* neon green */
+  --green-weak: rgba(0, 229, 140, 0.18);
+  --red: #ff35b0;           /* neon magenta */
+  --red-weak: rgba(255, 53, 176, 0.18);
+  --amber: #ffce5c;
+
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.5), 0 10px 30px rgba(0, 0, 0, 0.45);
+  --shadow-lift: 0 16px 44px rgba(0, 0, 0, 0.6);
+
+  --glass-blur: 18px;
+  --sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0));
+  /* subtle green + magenta glows behind the glass */
+  --ambient:
+    radial-gradient(60% 50% at 12% 0%, rgba(0, 229, 140, 0.10), transparent 70%),
+    radial-gradient(55% 45% at 100% 20%, rgba(255, 53, 176, 0.10), transparent 70%),
+    radial-gradient(50% 50% at 50% 110%, rgba(124, 123, 255, 0.10), transparent 70%);
+}

@@ -1,0 +1,16 @@
+.wrap { }
+.layout { display: flex; gap: var(--s5); flex-wrap: wrap; align-items: center; }
+.svg { width: 300px; max-width: 100%; height: auto; }
+.controls { flex: 1; min-width: 240px; display: flex; flex-direction: column; gap: var(--s3); }
+.controls label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--text-muted); }
+.controls input[type="range"] { width: 100%; accent-color: var(--accent); }
+
+.stats { display: flex; align-items: center; gap: var(--s5); margin-top: var(--s2); }
+.statV { font-size: 22px; font-weight: 800; }
+.fu { animation: fu 600ms var(--ease); }
+.fd { animation: fd 600ms var(--ease); }
+@keyframes fu { 0% { background: var(--green-weak); } 100% { background: transparent; } }
+@keyframes fd { 0% { background: var(--red-weak); } 100% { background: transparent; } }
+
+.log { margin-top: var(--s4); border-top: 1px solid var(--border); padding-top: var(--s3); display: flex; flex-direction: column; gap: 2px; min-height: 28px; }
+.lesson { background: var(--accent-weak); border-radius: var(--radius-sm); padding: var(--s3); margin-top: var(--s3); }

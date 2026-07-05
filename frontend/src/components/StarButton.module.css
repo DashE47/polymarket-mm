@@ -1,0 +1,8 @@
+.star {
+  background: none; border: none; cursor: pointer;
+  font-size: 18px; line-height: 1; color: var(--text-muted);
+  padding: 2px; border-radius: 6px;
+  transition: transform var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.star:hover { transform: scale(1.2); color: var(--amber); }
+.on { color: var(--amber); }

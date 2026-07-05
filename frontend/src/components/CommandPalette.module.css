@@ -1,0 +1,44 @@
+.backdrop {
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(10, 16, 22, 0.45);
+  backdrop-filter: blur(3px);
+  display: flex; align-items: flex-start; justify-content: center;
+  padding-top: 12vh;
+  animation: fade 160ms var(--ease);
+}
+.panel {
+  width: min(560px, 92vw);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lift);
+  overflow: hidden;
+  animation: pop 160ms var(--ease);
+}
+.input {
+  width: 100%; border: none; border-bottom: 1px solid var(--border);
+  border-radius: 0; padding: var(--s4) var(--s5); font-size: 16px; background: var(--surface);
+}
+.input:focus { outline: none; box-shadow: none; }
+
+.list { max-height: 52vh; overflow-y: auto; padding: var(--s2); }
+.section { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); padding: var(--s2) var(--s3) var(--s1); }
+.row {
+  width: 100%; display: flex; justify-content: space-between; align-items: center; gap: var(--s3);
+  background: none; border: none; cursor: pointer; text-align: left;
+  padding: var(--s3); border-radius: var(--radius-sm); color: var(--text); font: inherit;
+}
+.active { background: var(--accent-weak); }
+.rowLabel { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rowKind { font-size: 11px; color: var(--text-muted); flex-shrink: 0; }
+.empty { padding: var(--s4); color: var(--text-muted); font-size: 13px; }
+
+.footer { padding: var(--s2) var(--s4); border-top: 1px solid var(--border); font-size: 11px; color: var(--text-muted); display: flex; gap: 6px; align-items: center; }
+.footer kbd {
+  background: var(--surface-2); border: 1px solid var(--border); border-radius: 4px;
+  padding: 0 5px; font-family: var(--font-mono); font-size: 11px;
+}
+
+@keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes pop { from { opacity: 0; transform: translateY(-8px) scale(0.98); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .backdrop, .panel { animation: none; } }

@@ -1,0 +1,8 @@
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--s3);
+}
+@media (max-width: 720px) {
+  .metrics { grid-template-columns: repeat(2, 1fr); }
+}
