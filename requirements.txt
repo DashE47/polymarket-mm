@@ -34,3 +34,10 @@ plotly
 # [standard] pulls in the websockets support we need for the live book feed.
 fastapi
 uvicorn[standard]
+
+# Statistics mini-book generator (scripts/book_*.py): reportlab typesets the PDF,
+# pypdfium2 renders pages for verification, python-bidi lays out the Hebrew (RTL)
+# edition. matplotlib (above) draws the figures.
+reportlab
+pypdfium2
+python-bidi
