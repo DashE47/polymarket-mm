@@ -19,6 +19,7 @@ const VERDICTS: { tag: "lead" | "maybe" | "dead" | "parked"; name: string; why: 
   { tag: "dead", name: "5-min (any strategy)", why: "market proven efficient on 2,360 buckets — momentum & fade both ≈0 or negative. Stopped recording it." },
   { tag: "dead", name: "Fade the dip (all horizons)", why: "dips continue rather than revert — uniformly −1.5 to −13pp with exact fills. Entry is −EV; no exit rule can rescue a bad entry." },
   { tag: "parked", name: "Market making (spread capture)", why: "the original platform below — engine works, edge never validated. Revisit after the momentum bot." },
+  { tag: "parked", name: "News-overshoot reversion (event markets)", why: "real effect — a news jump overshoots then partly reverts. Untradeable on longshots (wide spread + reversed leverage eat the 0.5¢ move), but plausible on mid-priced, liquid markets (elections, big sports). Needs a different system: event markets + jump detector. Test only after the momentum bot validates." },
 ];
 
 const STEPS: { label: string; state: "done" | "now" | "todo" }[] = [
