@@ -20,9 +20,14 @@ from reportlab.lib.pagesizes import A4  # noqa: E402
 from reportlab.lib.styles import ParagraphStyle  # noqa: E402
 from reportlab.lib.units import cm  # noqa: E402
 from reportlab.platypus import (  # noqa: E402
-    BaseDocTemplate, Frame, HRFlowable, Image, KeepTogether, NextPageTemplate, PageBreak,
+    BaseDocTemplate, CondPageBreak, Frame, Image, KeepTogether, NextPageTemplate, PageBreak,
     PageTemplate, Paragraph, Spacer, Table, TableStyle,
 )
+
+# Each chapter opens on a fresh page, but via CondPageBreak(near-full-height): it
+# forces a new page only when the current one already has content, so a chapter that
+# exactly fills its page never leaves a trailing BLANK page before the next chapter.
+CHAPTER_BREAK = 700
 from reportlab.lib.utils import ImageReader  # noqa: E402
 
 FIGS = PROJECT_ROOT / "reports" / "book_figs"
@@ -81,19 +86,11 @@ def H2(text):
 def CH(title, kicker):
     global _chapno
     _chapno += 1
-    head = [Paragraph(f"CHAPTER {_chapno}", st_kick), Paragraph(title, st_h1),
-            Paragraph(kicker, ParagraphStyle("k2", parent=st_cap, fontSize=10.5,
-                                             leading=14.5, spaceAfter=10))]
-    if _chapno == 1:
-        story.append(PageBreak())  # chapter 1 opens fresh after the front matter
-    else:
-        # Chapters flow continuously with a divider rule — no forced page breaks,
-        # so short chapters don't leave half-blank pages.
-        story.append(Spacer(1, 16))
-        story.append(HRFlowable(width="100%", thickness=0.7, color=colors.HexColor("#d8dee6"),
-                                spaceBefore=0, spaceAfter=12))
-    head[-1].keepWithNext = 1  # don't strand the heading at the foot of a page
-    story.append(KeepTogether(head))
+    story.append(CondPageBreak(CHAPTER_BREAK))  # own page, but never a blank one
+    story.append(Paragraph(f"CHAPTER {_chapno}", st_kick))
+    story.append(Paragraph(title, st_h1))
+    story.append(Paragraph(kicker, ParagraphStyle("k2", parent=st_cap, fontSize=10.5,
+                                                  leading=14.5, spaceAfter=12)))
 
 
 def _box(rows, bg, edge):
@@ -627,7 +624,7 @@ WARN("The three ways this can still fail",
      "precisely to expose all three before a real dollar is at risk.")
 
 # ============================ GLOSSARY =======================================
-story.append(PageBreak())
+story.append(CondPageBreak(CHAPTER_BREAK))
 story.append(Paragraph("Glossary", st_h1))
 story.append(Paragraph("Every term in one place, one breath each.", st_cap))
 GLOSS = [
