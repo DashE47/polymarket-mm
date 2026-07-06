@@ -24,7 +24,7 @@ from reportlab.pdfbase import pdfmetrics  # noqa: E402
 from reportlab.pdfbase.ttfonts import TTFont  # noqa: E402
 from reportlab.lib.utils import ImageReader  # noqa: E402
 from reportlab.platypus import (  # noqa: E402
-    BaseDocTemplate, Frame, Image, KeepTogether, PageBreak, PageTemplate,
+    BaseDocTemplate, Frame, HRFlowable, Image, KeepTogether, PageBreak, PageTemplate,
     Paragraph, Spacer, Table, TableStyle,
 )
 
@@ -110,10 +110,15 @@ def H2(text):
 def CH(title, kicker):
     global _chapno
     _chapno += 1
-    story.append(PageBreak())
-    story.append(he(f"פרק {_chapno}", st_kick))
-    story.append(he(title, st_h1))
-    story.append(he(kicker, st_kick2))
+    head = [he(f"פרק {_chapno}", st_kick), he(title, st_h1), he(kicker, st_kick2)]
+    if _chapno == 1:
+        story.append(PageBreak())
+    else:
+        story.append(Spacer(1, 16))
+        story.append(HRFlowable(width="100%", thickness=0.7, color=colors.HexColor("#d8dee6"),
+                                spaceBefore=0, spaceAfter=12))
+    head[-1].keepWithNext = 1
+    story.append(KeepTogether(head))
 
 
 def _box(rows, bg, edge):

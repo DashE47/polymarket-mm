@@ -20,7 +20,7 @@ from reportlab.lib.pagesizes import A4  # noqa: E402
 from reportlab.lib.styles import ParagraphStyle  # noqa: E402
 from reportlab.lib.units import cm  # noqa: E402
 from reportlab.platypus import (  # noqa: E402
-    BaseDocTemplate, Frame, Image, KeepTogether, NextPageTemplate, PageBreak,
+    BaseDocTemplate, Frame, HRFlowable, Image, KeepTogether, NextPageTemplate, PageBreak,
     PageTemplate, Paragraph, Spacer, Table, TableStyle,
 )
 from reportlab.lib.utils import ImageReader  # noqa: E402
@@ -81,11 +81,19 @@ def H2(text):
 def CH(title, kicker):
     global _chapno
     _chapno += 1
-    story.append(PageBreak())
-    story.append(Paragraph(f"CHAPTER {_chapno}", st_kick))
-    story.append(Paragraph(title, st_h1))
-    story.append(Paragraph(kicker, ParagraphStyle("k2", parent=st_cap, fontSize=10.5,
-                                                  leading=14.5, spaceAfter=12)))
+    head = [Paragraph(f"CHAPTER {_chapno}", st_kick), Paragraph(title, st_h1),
+            Paragraph(kicker, ParagraphStyle("k2", parent=st_cap, fontSize=10.5,
+                                             leading=14.5, spaceAfter=10))]
+    if _chapno == 1:
+        story.append(PageBreak())  # chapter 1 opens fresh after the front matter
+    else:
+        # Chapters flow continuously with a divider rule — no forced page breaks,
+        # so short chapters don't leave half-blank pages.
+        story.append(Spacer(1, 16))
+        story.append(HRFlowable(width="100%", thickness=0.7, color=colors.HexColor("#d8dee6"),
+                                spaceBefore=0, spaceAfter=12))
+    head[-1].keepWithNext = 1  # don't strand the heading at the foot of a page
+    story.append(KeepTogether(head))
 
 
 def _box(rows, bg, edge):
