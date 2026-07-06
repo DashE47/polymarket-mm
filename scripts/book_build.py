@@ -68,8 +68,20 @@ st_author = ParagraphStyle("author", fontName="Helvetica-Bold", fontSize=13, lea
 st_contact = ParagraphStyle("contact", fontName="Helvetica", fontSize=10.5, leading=15,
                             textColor=ACCENT, alignment=1)
 
-AUTHOR = "Nitzan Ben Dror"
-CONTACT = "[redacted-phone]  &nbsp;·&nbsp;  [redacted-email]"
+# Contact details come from a LOCAL author.json (gitignored) so they never live
+# in the public source. Falls back to author.example.json placeholders.
+def _author():
+    for name in ("author.json", "author.example.json"):
+        p = PROJECT_ROOT / name
+        if p.exists():
+            return json.loads(p.read_text(encoding="utf-8"))
+    return {"name": "", "contact": "", "github": ""}
+
+
+_A = _author()
+AUTHOR = _A.get("name", "")
+CONTACT = _A.get("contact", "").replace("|", "&nbsp;·&nbsp;")
+GITHUB = _A.get("github", "")
 
 story = []
 _chapno = 0
@@ -674,13 +686,15 @@ for term, desc in GLOSS:
 
 # ============================ COLOPHON =======================================
 story.append(Spacer(1, 1.4 * cm))
-_box([[Paragraph("About the author", st_term_name)],
-      [Paragraph(f"<b>{AUTHOR}</b> — independent quantitative-research and full-stack "
-                 "engineering project. Every figure and number in this book was produced by my "
-                 "own code from data I recorded, and regenerates automatically as the dataset "
-                 "grows. Full source code and the live dashboard are available on request.",
-                 st_term_body)],
-      [Paragraph(f"Contact: &nbsp;{CONTACT}", st_term_body)]], TERM_BG, TERM_EDGE)
+_src = (f'Full source code: <a href="{GITHUB}" color="#0d5fa8">{GITHUB}</a>'
+        if GITHUB else "Full source code and the live dashboard are available on request.")
+_colo = [[Paragraph("About the author", st_term_name)],
+         [Paragraph(f"<b>{AUTHOR}</b> — independent quantitative-research and full-stack "
+                    "engineering project. Every figure and number in this book was produced by my "
+                    "own code from data I recorded, and regenerates automatically as the dataset "
+                    f"grows. {_src}", st_term_body)],
+         [Paragraph(f"Contact: &nbsp;{CONTACT}", st_term_body)]]
+_box(_colo, TERM_BG, TERM_EDGE)
 
 
 # ============================ BUILD ==========================================
@@ -696,7 +710,7 @@ def on_page(canvas, doc):
 doc = BaseDocTemplate(str(OUT), pagesize=A4,
                       leftMargin=2 * cm, rightMargin=2 * cm,
                       topMargin=1.8 * cm, bottomMargin=1.8 * cm,
-                      title="Trading by the Numbers — Nitzan Ben Dror",
+                      title=f"Trading by the Numbers — {AUTHOR}",
                       author=AUTHOR)
 frame = Frame(2 * cm, 1.8 * cm, A4[0] - 4 * cm, A4[1] - 3.6 * cm, id="main")
 doc.addPageTemplates([PageTemplate(id="page", frames=[frame], onPage=on_page)])

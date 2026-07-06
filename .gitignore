@@ -5,6 +5,9 @@
 .env.*
 !.env.example          # keep the template, ignore real env files
 
+# Personal contact details for the generated book (keep out of public source).
+author.json
+
 # ---------------------------------------------------------------------------
 # Python
 # ---------------------------------------------------------------------------

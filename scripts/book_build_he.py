@@ -78,8 +78,21 @@ st_author = ParagraphStyle("auth", fontName="Arial-Bold", fontSize=14, leading=1
 story = []
 _chapno = 0
 
-AUTHOR_HE = "ניצן בן דרור"
-CONTACT = "[redacted-phone]  |  [redacted-email]"
+# Contact details come from a LOCAL author.json (gitignored) — kept out of the
+# public source. Falls back to author.example.json placeholders.
+def _author():
+    for name in ("author.json", "author.example.json"):
+        p = PROJECT_ROOT / name
+        if p.exists():
+            return json.loads(p.read_text(encoding="utf-8"))
+    return {}
+
+
+_A = _author()
+AUTHOR_HE = _A.get("name_he") or _A.get("name", "")
+AUTHOR_LAT = _A.get("name", "")
+CONTACT = _A.get("contact", "")
+GITHUB = _A.get("github", "")
 
 
 def _wrap(text, font, size, maxw):
@@ -603,11 +616,15 @@ for term, desc in GLOSS:
 
 # ============================ COLOPHON =======================================
 story.append(Spacer(1, 1.2 * cm))
-_box([[he("על המחבר", st_tname, BOX_W)],
-      [he(f"{AUTHOR_HE} — פרויקט עצמאי במחקר כמותי והנדסת fullstack. כל תרשים וכל מספר בספר הזה הופקו "
-          "מהקוד שלי מתוך נתונים שהקלטתי, ומתחדשים אוטומטית ככל שהמאגר גדל. קוד המקור המלא ולוח-הבקרה "
-          "החי זמינים לפי בקשה.", st_tbody, BOX_W)],
-      [Paragraph("ליצירת קשר:  " + CONTACT, st_ltr)]], TERM_BG, TERM_EDGE)
+_tail = "קוד המקור המלא זמין ב-GitHub:" if GITHUB else "קוד המקור המלא ולוח-הבקרה החי זמינים לפי בקשה."
+_rows = [[he("על המחבר", st_tname, BOX_W)],
+         [he(f"{AUTHOR_HE} — פרויקט עצמאי במחקר כמותי והנדסת fullstack. כל תרשים וכל מספר בספר הזה "
+             f"הופקו מהקוד שלי מתוך נתונים שהקלטתי, ומתחדשים אוטומטית ככל שהמאגר גדל. {_tail}",
+             st_tbody, BOX_W)]]
+if GITHUB:
+    _rows.append([Paragraph(f'<a href="{GITHUB}" color="#0d5fa8">{GITHUB}</a>', st_ltr)])
+_rows.append([he("ליצירת קשר: " + CONTACT, st_tbody, BOX_W)])
+_box(_rows, TERM_BG, TERM_EDGE)
 
 
 # ============================ BUILD ==========================================
@@ -615,14 +632,14 @@ def on_page(canvas, doc):
     canvas.saveState()
     canvas.setFont("Arial", 8)
     canvas.setFillColor(colors.HexColor("#8a8a8a"))
-    canvas.drawRightString(A4[0] - 2 * cm, 1.1 * cm, get_display("מסחר לפי המספרים  |  ניצן בן דרור", base_dir="R"))
+    canvas.drawRightString(A4[0] - 2 * cm, 1.1 * cm, get_display(f"מסחר לפי המספרים  |  {AUTHOR_HE}", base_dir="R"))
     canvas.drawString(2 * cm, 1.1 * cm, f"{doc.page}")
     canvas.restoreState()
 
 
 doc = BaseDocTemplate(str(OUT), pagesize=A4, leftMargin=2 * cm, rightMargin=2 * cm,
                       topMargin=1.8 * cm, bottomMargin=1.8 * cm,
-                      title="Trading by the Numbers (Hebrew) — Nitzan Ben Dror", author="Nitzan Ben Dror")
+                      title=f"Trading by the Numbers (Hebrew) — {AUTHOR_LAT}", author=AUTHOR_LAT)
 frame = Frame(2 * cm, 1.8 * cm, A4[0] - 4 * cm, A4[1] - 3.6 * cm, id="main")
 doc.addPageTemplates([PageTemplate(id="page", frames=[frame], onPage=on_page)])
 doc.build(story)
