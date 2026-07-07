@@ -207,7 +207,11 @@ def replay_bucket(meta: dict, events: list[dict], resolution: dict | None,
                     side, tid, mid = c
                     book = books[tid]
                     triggered = mid >= thr if momentum else mid <= thr
-                    if triggered and book.spread is not None and book.spread <= cfg.max_spread:
+                    # Crossed/locked books (bid ≥ ask) also make spread NEGATIVE, which
+                    # would pass the max_spread cap — skip them, same as the live trader.
+                    crossed = (book.best_bid is None or book.best_ask is None
+                               or book.best_bid >= book.best_ask)
+                    if triggered and not crossed and book.spread is not None and book.spread <= cfg.max_spread:
                         st.update(phase="pending", side=side, tid=tid,
                                   fill_time=t + cfg.latency_ms / 1000.0, trig_elapsed=elapsed)
             if st["phase"] == "pending" and t >= st["fill_time"]:

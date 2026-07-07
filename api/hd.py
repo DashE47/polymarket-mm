@@ -48,7 +48,7 @@ router = APIRouter(prefix="/hd", tags=["hd-research"])
 HD_DIR = PROJECT_ROOT / "data" / "updown_hd"
 CACHE_DIR = HD_DIR / "_replay_cache"
 SIDECAR = HD_DIR / "_resolved.json"
-CACHE_VERSION = 1       # bump to invalidate all caches when replay logic changes
+CACHE_VERSION = 2       # bump to invalidate all caches when replay logic changes (v2: crossed-book guard)
 FINISHED_GRACE = 90.0   # only replay files whose bucket ended ≥ this many s ago
 MIN_SAMPLE = 10
 

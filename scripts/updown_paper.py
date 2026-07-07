@@ -12,6 +12,12 @@ predicted, the pipeline is proven end-to-end.
 RULES (from the 16GB study — see Mission Control):
     60-min markets: buy the strong side when its mid ≥ 0.65, within the first 48 min
     15-min markets: buy the strong side when its mid ≥ 0.85, within the first 12 min
+    (15-min is OFF by default: across 7 days of sim+live it nets ~breakeven after
+    spread; the validated edge is the 60-min rule. Re-enable with --windows 15,60.)
+
+SIZING: --stake is the budget per CLOCK-WINDOW, split evenly across the assets.
+The 4 cryptos move as one block, so 4 full stakes in the same window is one bet
+levered 4x — the July 6-7 live run learned this the hard way.
 
 STATE (data/paper/):
     wallet.json    {balance, start_balance, ...}    — the demo wallet
@@ -21,7 +27,8 @@ STATE (data/paper/):
 SIMULATION ONLY — no orders are sent, no keys are used.
 
 USAGE
-    .\.venv\Scripts\python.exe scripts\updown_paper.py --windows 15,60 --stake 10
+    .\.venv\Scripts\python.exe scripts\updown_paper.py --stake 10          # 60-min rule
+    .\.venv\Scripts\python.exe scripts\updown_paper.py --windows 15,60     # both rules
 """
 
 from __future__ import annotations
@@ -184,6 +191,11 @@ class BucketTrader:
         mid, spread = book.midpoint, book.spread
         if mid is None or spread is None or mid < thr or spread > MAX_SPREAD:
             return
+        # Skip crossed/locked books (bid ≥ ask): the quotes are momentarily unreliable
+        # and can fill below the threshold the rule thinks it's buying at.
+        bb, ba = book.best_bid, book.best_ask
+        if bb is None or ba is None or bb >= ba:
+            return
         # Also require the OTHER side to confirm this is the strong side (mid ≥ 0.5).
         if mid < 0.5:
             return
@@ -211,8 +223,10 @@ def main() -> int:
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     ap = argparse.ArgumentParser(description="Paper-trade the momentum rule with a demo wallet.")
-    ap.add_argument("--windows", default="15,60", help="market lengths to trade (rules built in)")
-    ap.add_argument("--stake", type=float, default=10.0, help="demo dollars per trade")
+    ap.add_argument("--windows", default="60", help="market lengths to trade (rules built in)")
+    ap.add_argument("--stake", type=float, default=10.0,
+                    help="demo dollars per CLOCK-WINDOW, split evenly across the assets — "
+                         "the 4 cryptos move together, so the window is the real unit of risk")
     ap.add_argument("--start-balance", type=float, default=1000.0, help="wallet opening balance (first run)")
     ap.add_argument("--assets", default="Bitcoin,Ethereum,Solana,XRP")
     ap.add_argument("--status-every", type=float, default=300.0)
@@ -220,8 +234,13 @@ def main() -> int:
 
     windows = {int(x) for x in args.windows.split(",") if x.strip()} & set(RULES)
     assets = {a.strip().lower() for a in args.assets.split(",") if a.strip()}
+    # The stake is a PER-CLOCK-WINDOW budget: BTC/ETH/SOL/XRP buckets ending at the
+    # same instant are one correlated bet, so each asset gets an equal slice. This
+    # keeps the dollars-at-risk per market move constant instead of 4x'ing it.
+    per_asset = args.stake / max(1, len(assets))
     wallet = Wallet(args.start_balance)
-    print(f"PAPER TRADER — windows {sorted(windows)}m · stake ${args.stake:g} · "
+    print(f"PAPER TRADER — windows {sorted(windows)}m · stake ${args.stake:g}/clock-window "
+          f"(${per_asset:.2f} × {len(assets)} assets) · "
           f"balance ${wallet.state['balance']:.2f} (start ${wallet.state['start_balance']:g})")
     print(f"rules: " + " · ".join(f"{w}m: buy ≥{RULES[w][0]} in first {RULES[w][1] / 60:.0f}m"
                                   for w in sorted(windows)) + "  | SIMULATION ONLY\n")
@@ -259,7 +278,7 @@ def main() -> int:
                 if now < start or now >= end or (now - start) > RULES[win][1]:
                     continue  # not live, or past the rule's entry window — no point watching
                 try:
-                    bt = BucketTrader(m, asset, win, end, wallet, args.stake)
+                    bt = BucketTrader(m, asset, win, end, wallet, per_asset)
                     bt.start()
                     active[cid] = bt
                 except Exception as exc:  # noqa: BLE001
