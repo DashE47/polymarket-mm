@@ -49,6 +49,11 @@ class FillCfg:
     # whatever the book can't absorb rides to resolution).
     stop_mid: float | None = None   # sell if the held side's mid ≤ this (stop-loss)
     take_mid: float | None = None   # sell if the held side's mid ≥ this (take-profit)
+    # Velocity exit: sell if the held side's mid FELL ≥ mom_drop within the last
+    # mom_window_s seconds (downward momentum), regardless of level. Distinct from
+    # stop_mid: a slow bleed to 0.40 won't trigger it, a fast 8¢ air-pocket will.
+    mom_drop: float | None = None
+    mom_window_s: float = 60.0
 
 
 def peek_meta(path: str | Path) -> dict | None:
@@ -231,9 +236,10 @@ def replay_bucket(meta: dict, events: list[dict], resolution: dict | None,
                     "pnl": (shares - spent) if won else (-spent if won is not None else None),
                     "exit": None,
                 }
-                if cfg.stop_mid is not None or cfg.take_mid is not None:
+                if cfg.stop_mid is not None or cfg.take_mid is not None or cfg.mom_drop is not None:
                     st["phase"] = "holding"   # keep watching the held side for an exit
                     st["result"] = result
+                    st["mids"] = []           # (t, mid) history for the velocity exit
                 else:
                     st["phase"] = "done"
                     st["result"] = result
@@ -247,14 +253,23 @@ def replay_bucket(meta: dict, events: list[dict], resolution: dict | None,
                     continue
                 hit_stop = cfg.stop_mid is not None and mid <= cfg.stop_mid
                 hit_take = cfg.take_mid is not None and mid >= cfg.take_mid
-                if not (hit_stop or hit_take):
+                hit_mom = False
+                if cfg.mom_drop is not None:
+                    mids = st["mids"]
+                    mids.append((t, mid))
+                    cutoff = t - cfg.mom_window_s
+                    while mids and mids[0][0] < cutoff:
+                        mids.pop(0)
+                    peak = max(m for _, m in mids)
+                    hit_mom = (peak - mid) >= cfg.mom_drop
+                if not (hit_stop or hit_take or hit_mom):
                     continue
                 res = st["result"]
                 sold, proceeds, sell_avg = walk_bids(book.bid_levels(50), res["shares"])
                 left = res["shares"] - sold
                 settle = None if res["won"] is None else (left if res["won"] else 0.0)
                 res.update(
-                    exit="stop" if hit_stop else "take",
+                    exit="stop" if hit_stop else ("take" if hit_take else "mom"),
                     exit_elapsed=elapsed, exit_mid=mid, exit_avg=sell_avg,
                     shares_sold=sold, proceeds=proceeds,
                     pnl=(proceeds + settle - res["spent"]) if settle is not None else None,

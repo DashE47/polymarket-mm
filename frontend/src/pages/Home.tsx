@@ -18,6 +18,7 @@ const VERDICTS: { tag: "lead" | "maybe" | "dead" | "parked"; name: string; why: 
   { tag: "maybe", name: "15-min momentum", why: "high thresholds (≥0.85) late-window: +3–4¢/bet, passed both tests — smaller edge, decent sample" },
   { tag: "dead", name: "5-min (any strategy)", why: "market proven efficient on 2,360 buckets — momentum & fade both ≈0 or negative. Stopped recording it." },
   { tag: "dead", name: "Fade the dip (all horizons)", why: "dips continue rather than revert — uniformly −1.5 to −13pp with exact fills. Entry is −EV; no exit rule can rescue a bad entry." },
+  { tag: "dead", name: "Exit rules on 60-min momentum (stops & velocity)", why: "every exit tested leaks edge: stop-loss 0.45 keeps only +3.4¢ of hold's +9.3¢/bet; velocity exits (sell on 5–15¢ fast drops) keep ≈0¢ — 54–86% of winners dip hard mid-flight and recover. Mid-flight prices are calibrated; ALL edge realizes at settlement. Hold to resolution." },
   { tag: "parked", name: "Market making (spread capture)", why: "the original platform below — engine works, edge never validated. Revisit after the momentum bot." },
   { tag: "parked", name: "News-overshoot reversion (event markets)", why: "real effect — a news jump overshoots then partly reverts. Untradeable on longshots (wide spread + reversed leverage eat the 0.5¢ move), but plausible on mid-priced, liquid markets (elections, big sports). Needs a different system: event markets + jump detector. Test only after the momentum bot validates." },
 ];
@@ -25,8 +26,8 @@ const VERDICTS: { tag: "lead" | "maybe" | "dead" | "parked"; name: string; why: 
 const STEPS: { label: string; state: "done" | "now" | "todo" }[] = [
   { label: "Build honest instruments (tick recorder, exact-fill replay, real settlement)", state: "done" },
   { label: "Find a candidate edge and stress-test it (latency, luck, time-split)", state: "done" },
-  { label: "Confirm 60-min momentum on more data + build exit rules (sell support)", state: "now" },
-  { label: "Paper-trade with a demo wallet — live signals, simulated fills, tracked P&L", state: "todo" },
+  { label: "Confirm 60-min momentum on more data + build exit rules (sell support)", state: "done" },
+  { label: "Paper-trade with a demo wallet — live signals, simulated fills, tracked P&L", state: "now" },
   { label: "Tiny real stakes with kill-switches, scale only if live matches paper", state: "todo" },
 ];
 

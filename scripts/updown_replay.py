@@ -80,6 +80,10 @@ def main() -> int:
                     help="exit overlay: sell (into the real bid ladder) if the held side's mid ≤ this")
     ap.add_argument("--take-mid", type=float, default=None,
                     help="exit overlay: sell if the held side's mid ≥ this (take profit)")
+    ap.add_argument("--mom-drop", type=float, default=None,
+                    help="velocity exit: sell if the held side's mid fell ≥ this within --mom-window s")
+    ap.add_argument("--mom-window", type=float, default=60.0,
+                    help="lookback seconds for --mom-drop (default 60)")
     ap.add_argument("--detail", default="", help="'thr,win' → per-bucket fills + equity for that rule")
     ap.add_argument("--null", action="store_true",
                     help="block-bootstrap each rule's P&L/bet (resamples whole clock-windows) to "
@@ -94,7 +98,8 @@ def main() -> int:
     rules = [(thr, w) for thr in thresholds for w in windows_min]
     cfg = FillCfg(stake=args.stake, max_spread=args.max_spread,
                   latency_ms=args.latency_ms, min_fill_frac=args.min_fill_frac,
-                  stop_mid=args.stop_mid, take_mid=args.take_mid)
+                  stop_mid=args.stop_mid, take_mid=args.take_mid,
+                  mom_drop=args.mom_drop, mom_window_s=args.mom_window)
 
     detail_rule = None
     if args.detail:
