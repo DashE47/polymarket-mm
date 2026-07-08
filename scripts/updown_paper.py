@@ -35,6 +35,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 import threading
 import time
@@ -71,6 +72,30 @@ def _il(ts: float) -> str:
 
 def _now_iso() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def _acquire_instance_lock():
+    """One paper trader per machine, enforced by an OS-level exclusive file lock.
+
+    On July 7 two instances ran concurrently (terminal + API): they fought over
+    wallet.json (last-writer-wins corrupted the balance) and double-traded 34
+    buckets. The lock is held for the process lifetime and dies with the process,
+    so a crash never leaves a stale lock. Returns the open handle, or None if
+    another instance already holds it.
+    """
+    PAPER_DIR.mkdir(parents=True, exist_ok=True)
+    fh = open(PAPER_DIR / "paper.lock", "w", encoding="utf-8")
+    try:
+        import msvcrt
+        msvcrt.locking(fh.fileno(), msvcrt.LK_NBLCK, 1)
+    except ImportError:
+        pass  # non-Windows: best effort, no lock
+    except OSError:
+        fh.close()
+        return None
+    fh.write(str(os.getpid()))
+    fh.flush()
+    return fh
 
 
 def _end_ts(iso: str):
@@ -231,6 +256,13 @@ def main() -> int:
     ap.add_argument("--assets", default="Bitcoin,Ethereum,Solana,XRP")
     ap.add_argument("--status-every", type=float, default=300.0)
     args = ap.parse_args()
+
+    lock = _acquire_instance_lock()  # noqa: F841 — held until the process exits
+    if lock is None:
+        print("Another paper trader is ALREADY RUNNING on this machine — refusing to "
+              "start a second one (two instances corrupt the shared wallet). Stop it "
+              "first: the site's Wallet page, or POST /paper/stop on the API.")
+        return 1
 
     windows = {int(x) for x in args.windows.split(",") if x.strip()} & set(RULES)
     assets = {a.strip().lower() for a in args.assets.split(",") if a.strip()}

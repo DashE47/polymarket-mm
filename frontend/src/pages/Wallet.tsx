@@ -16,7 +16,7 @@ const WINDOWS = [15, 60];
 export default function Wallet() {
   const toast = useToast();
   const qc = useQueryClient();
-  const [windows, setWindows] = useState<number[]>([15, 60]);
+  const [windows, setWindows] = useState<number[]>([60]); // validated rule; 15-min is ~breakeven
   const [stake, setStake] = useState(10);
   const [showLog, setShowLog] = useState(true);
 

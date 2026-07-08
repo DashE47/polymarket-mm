@@ -73,7 +73,7 @@ _daemon = _Daemon()
 
 
 class PaperStart(BaseModel):
-    windows: list[int] = [15, 60]
+    windows: list[int] = [60]   # the validated rule — 15-min is ~breakeven after spread
     stake: float = 10.0
 
 
