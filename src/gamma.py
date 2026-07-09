@@ -70,6 +70,7 @@ class Market:
     # Extra fields used by the API's market-stats endpoint (and a future UI's
     # stats bar). All optional with safe defaults so nothing else breaks.
     liquidity: float = 0.0
+    volume_24h: float = 0.0
     one_day_price_change: float = 0.0
     one_hour_price_change: float = 0.0
     end_date: str = ""
@@ -140,6 +141,7 @@ def _to_market(raw: dict) -> Market | None:
         enable_order_book=bool(raw.get("enableOrderBook")),
         volume=float(raw.get("volumeNum") or raw.get("volume") or 0),
         liquidity=float(raw.get("liquidityNum") or raw.get("liquidity") or 0),
+        volume_24h=float(raw.get("volume24hr") or 0),
         one_day_price_change=float(raw.get("oneDayPriceChange") or 0),
         one_hour_price_change=float(raw.get("oneHourPriceChange") or 0),
         end_date=str(raw.get("endDate") or raw.get("endDateIso") or ""),
