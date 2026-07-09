@@ -8,6 +8,7 @@ import { api } from "../api/client";
 import { useWatchlist, tokenOf, type WatchItem } from "../state/WatchlistContext";
 import { useSelection } from "../state/SelectionContext";
 import AnimatedNumber from "../components/AnimatedNumber";
+import HealthStrip from "../components/HealthStrip";
 import Sparkline from "../components/Sparkline";
 import StarButton from "../components/StarButton";
 import styles from "./Home.module.css";
@@ -44,6 +45,8 @@ export default function Home() {
         Goal: a bot with a <em>proven</em> edge on Polymarket. Everything here is simulation-only until
         the ladder below says otherwise. Press <kbd>⌘K</kbd> to jump anywhere.
       </p>
+
+      <HealthStrip />
 
       {/* --- live dataset / research status --- */}
       <div className={styles.kpis}>
