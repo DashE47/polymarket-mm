@@ -151,8 +151,10 @@ def cmd_wallet(n_last: int = 12):
     print(f"\nlast {min(n_last, len(settles))} trades:")
     for s in settles[-n_last:]:
         e = ent_by_cid.get(s["cid"], {})
+        el = e.get("elapsed_min")
+        el_s = f"{el:>4.0f}m in" if el is not None else "   ?    "
         print(f"  {s['ts']} {e.get('asset', '?'):>9} {e.get('window_min', '?'):>3}m "
-              f"{e.get('side', '?'):>4} @ {e.get('avg', 0):.2f} -> "
+              f"{e.get('side', '?'):>4} @ {e.get('avg', 0):.2f} {el_s} -> "
               f"{'WIN ' if s['won'] else 'LOSS'} {s['pnl']:+.2f}")
 
 

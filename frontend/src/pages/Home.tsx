@@ -14,8 +14,8 @@ import styles from "./Home.module.css";
 
 // Findings from the 16GB / 3,344-bucket exact-fill study (July 2026).
 const VERDICTS: { tag: "lead" | "maybe" | "dead" | "parked"; name: string; why: string }[] = [
-  { tag: "lead", name: "60-min momentum", why: "buy the strong side (≥0.60–0.75) mid-market: +8–16¢/bet, passed significance + time-split — needs more data to confirm size (only ~190 buckets)" },
-  { tag: "maybe", name: "15-min momentum", why: "high thresholds (≥0.85) late-window: +3–4¢/bet, passed both tests — smaller edge, decent sample" },
+  { tag: "dead", name: "60-min momentum", why: "the +8–16¢/bet edge (July 1–5, 48 windows, passed all tests) COLLAPSED to ≈0 when the sample doubled to 104 windows (July 9 re-run: best cell +0.9¢, P(≤0)=0.40, every other cell ≤0). Same regime-dependent illusion as the 5-min collapse — the tests were right to warn 'one broad regime era'. Live paper P&L agreed: −4pp vs breakeven." },
+  { tag: "dead", name: "15-min momentum", why: "≈breakeven after spread on the pooled sample (sim +2.6pp, live −4.2pp, combined ~+0.7pp on ~970 bets) — the spread eats the signal" },
   { tag: "dead", name: "5-min (any strategy)", why: "market proven efficient on 2,360 buckets — momentum & fade both ≈0 or negative. Stopped recording it." },
   { tag: "dead", name: "Fade the dip (all horizons)", why: "dips continue rather than revert — uniformly −1.5 to −13pp with exact fills. Entry is −EV; no exit rule can rescue a bad entry." },
   { tag: "dead", name: "Exit rules on 60-min momentum (stops & velocity)", why: "every exit tested leaks edge: stop-loss 0.45 keeps only +3.4¢ of hold's +9.3¢/bet; velocity exits (sell on 5–15¢ fast drops) keep ≈0¢ — 54–86% of winners dip hard mid-flight and recover. Mid-flight prices are calibrated; ALL edge realizes at settlement. Hold to resolution." },
@@ -26,9 +26,9 @@ const VERDICTS: { tag: "lead" | "maybe" | "dead" | "parked"; name: string; why: 
 const STEPS: { label: string; state: "done" | "now" | "todo" }[] = [
   { label: "Build honest instruments (tick recorder, exact-fill replay, real settlement)", state: "done" },
   { label: "Find a candidate edge and stress-test it (latency, luck, time-split)", state: "done" },
-  { label: "Confirm 60-min momentum on more data + build exit rules (sell support)", state: "done" },
-  { label: "Paper-trade with a demo wallet — live signals, simulated fills, tracked P&L", state: "now" },
-  { label: "Tiny real stakes with kill-switches, scale only if live matches paper", state: "todo" },
+  { label: "Re-test on doubled data: momentum edge did NOT survive — Up/Down family concluded efficient", state: "done" },
+  { label: "Next candidate: pick from the parked ideas (news-overshoot, rewards MM, options-implied gap) with the same instruments", state: "now" },
+  { label: "Tiny real stakes with kill-switches, only after an edge survives everything above", state: "todo" },
 ];
 
 export default function Home() {
