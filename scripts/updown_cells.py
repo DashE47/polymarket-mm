@@ -83,7 +83,7 @@ def query(band: str, minutes: str) -> int:
     import datetime as dt
     print(f"asks {lo:.2f}-{hi:.2f} at minutes {m0}-{m1}   "
           f"(halves split at {dt.datetime.fromtimestamp(mid, dt.timezone.utc):%m-%d %H:%M} UTC)")
-    print(f"{'':>10} {'obs':>6} {'windows':>8} {'hit%':>7} {'paid%':>7} {'edge_pp':>8}")
+    print(f"{'':>10} {'obs':>6} {'windows':>8} {'hit%':>7} {'paid%':>7} {'edge_pp':>8} {'$100/bet':>9}")
     for label, rows in (("ALL", sel),
                         ("HALF A", [r for r in sel if r[3] < mid]),
                         ("HALF B", [r for r in sel if r[3] >= mid])):
@@ -92,10 +92,17 @@ def query(band: str, minutes: str) -> int:
             continue
         n = len(rows)
         nw = len({wk for *_, wk in rows})
-        hit = sum(w for _, _, w, _ in rows) / n * 100
-        paid = sum(a for _, a, _, _ in rows) / n * 100
+        hit = sum(w for _, _, w, _ in rows) / n
+        paid = sum(a for _, a, _, _ in rows) / n
+        # $100 on every bet in this cell, NET of the crypto taker fee
+        # (fee/share = 0.07 * p * (1-p); shares = 100 / (p + fee))
+        eff = paid + 0.07 * paid * (1 - paid)
+        usd = 100.0 * (hit / eff - 1.0)
         flag = "  (thin!)" if nw < 15 else ""
-        print(f"{label:>10} {n:>6} {nw:>8} {hit:>7.1f} {paid:>7.1f} {hit - paid:>+8.1f}{flag}")
+        print(f"{label:>10} {n:>6} {nw:>8} {hit * 100:>7.1f} {paid * 100:>7.1f} "
+              f"{(hit - paid) * 100:>+8.1f} {usd:>+9.2f}{flag}")
+    print("\n$100/bet = avg net P&L if you put $100 on every observation above,")
+    print("after the 7% crypto taker fee. Positive edge_pp can still lose here.")
     print("\nreminder: you are mining. same sign in BOTH halves = minimum bar;")
     print("only FRESH windows recorded after today can confirm a cell.")
     return 0
