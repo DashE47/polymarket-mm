@@ -47,6 +47,11 @@ CONTROL
   mm stop rec            stop recording
   mm stop all            stop both (API stays up)
 
+EXPLORE THE PRICE x TIME DATA YOURSELF
+  mm cell 0.60-0.70 20-30    edge of 60-70c asks seen at minutes 20-30
+                             (shows ALL + both halves; same sign = minimum bar)
+  mm cell --extract          rebuild the observation cache after new data
+
 RESEARCH (the tools we used for every study)
   mm replay --window-len 60 --mode momentum --stake 1 --min-fill-frac 0.5
                          exact-fill grid: which rule made money at 60-min
@@ -220,6 +225,8 @@ def main() -> int:
         cmd_start()
     elif cmd == "stop":
         cmd_stop(rest[0] if rest else "all")
+    elif cmd == "cell":
+        return passthrough("updown_cells.py", rest)
     elif cmd == "replay":
         return passthrough("updown_replay.py", rest)
     elif cmd == "report":
