@@ -63,7 +63,7 @@ def extract() -> None:
     print(f"wrote {len(obs)} observations -> {OBS.name}")
 
 
-def query(band: str, minutes: str) -> int:
+def query(band: str, minutes: str, one_per_window: bool = False) -> int:
     if not OBS.exists():
         print("no observation cache yet — run:  mm cell --extract")
         return 1
@@ -75,6 +75,12 @@ def query(band: str, minutes: str) -> int:
         return 1
     obs = json.loads(OBS.read_text(encoding="utf-8"))
     sel = [(m, a, w, wk) for m, a, w, wk in obs if lo <= a < hi and m0 <= m <= m1]
+    if one_per_window:
+        first: dict = {}
+        for r in sorted(sel):                      # earliest minute wins
+            first.setdefault(r[3], r)
+        sel = list(first.values())
+        print("(one bet per clock-window: first qualifying ask only — replicable live)")
     if not sel:
         print("no observations in that cell")
         return 0
@@ -117,8 +123,10 @@ def main() -> int:
     if args and args[0] == "--extract":
         extract()
         return 0
+    opw = "--one-per-window" in args
+    args = [a for a in args if a != "--one-per-window"]
     if len(args) >= 2:
-        return query(args[0], args[1])
+        return query(args[0], args[1], opw)
     print(__doc__)
     return 0
 
