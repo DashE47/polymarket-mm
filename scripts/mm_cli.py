@@ -188,11 +188,16 @@ def cmd_start():
             print("API did not come up - check logs")
             return
     print("API up")
-    r = api("/hd/recorder/start", "POST",
-            {"assets": ["Bitcoin", "Ethereum", "Solana", "XRP"], "windows": [15, 60]})
-    print("recorder   :", "started" if r and r.get("running") else r.get("detail", r))
     r = api("/paper/start", "POST", {"windows": [60], "stake": 10})
     print("paper bot  :", "started" if r and r.get("running") else r.get("detail", r))
+    print("(recorder NOT auto-started - disk policy July 14; use: mm start rec)")
+
+
+def cmd_start_rec():
+    r = api("/hd/recorder/start", "POST",
+            {"assets": ["Bitcoin", "Ethereum", "Solana", "XRP"], "windows": [60]})
+    print("recorder   :", "started (60-min only, ~0.5 GB/day)" if r and r.get("running")
+          else r.get("detail", r))
 
 
 def cmd_stop(which: str):
@@ -222,7 +227,10 @@ def main() -> int:
     elif cmd == "log":
         cmd_log(rest[0] if rest else "paper", int(rest[rest.index("-n") + 1]) if "-n" in rest else 20)
     elif cmd == "start":
-        cmd_start()
+        if rest and rest[0].startswith("rec"):
+            cmd_start_rec()
+        else:
+            cmd_start()
     elif cmd == "stop":
         cmd_stop(rest[0] if rest else "all")
     elif cmd == "cell":

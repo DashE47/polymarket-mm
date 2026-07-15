@@ -48,7 +48,9 @@ if (-not (Healthy)) {
 
 # --- 2. Recorder + 3. Paper trader (409 Conflict = already running - fine) ---
 foreach ($job in @(
-    @{ name = "recorder";     url = "$api/hd/recorder/start"; body = '{"assets":["Bitcoin","Ethereum","Solana","XRP"],"windows":[15,60]}' },
+    # recorder REMOVED from autostart (July 14, user request - disk pressure).
+    # To record again: mm start (one-off) or restore the line below.
+    # @{ name = "recorder";   url = "$api/hd/recorder/start"; body = '{"assets":["Bitcoin","Ethereum","Solana","XRP"],"windows":[15,60]}' },
     @{ name = "paper trader"; url = "$api/paper/start";       body = '{"windows":[60],"stake":10}' }
 )) {
     try {
