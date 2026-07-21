@@ -63,7 +63,7 @@ def extract() -> None:
     print(f"wrote {len(obs)} observations -> {OBS.name}")
 
 
-def query(band: str, minutes: str, one_per_window: bool = False) -> int:
+def query(band: str, minutes: str, one_per_window: bool = False, since: str = "") -> int:
     if not OBS.exists():
         print("no observation cache yet — run:  mm cell --extract")
         return 1
@@ -73,7 +73,19 @@ def query(band: str, minutes: str, one_per_window: bool = False) -> int:
     except ValueError:
         print("format:  mm cell 0.60-0.70 20-30")
         return 1
+    import datetime as dt
     obs = json.loads(OBS.read_text(encoding="utf-8"))
+    if since:
+        # keep only windows (buckets) that ended on/after this date — the honest
+        # out-of-sample test: windows the frozen cell could NOT have been fit to.
+        try:
+            cut = dt.datetime.strptime(since, "%Y-%m-%d").replace(tzinfo=dt.timezone.utc).timestamp()
+        except ValueError:
+            print("format:  --since 2026-07-14"); return 1
+        before = len({wk for *_, wk in obs})
+        obs = [o for o in obs if o[3] >= cut]
+        after = len({wk for *_, wk in obs})
+        print(f"(FRESH-ONLY: windows ending >= {since} — {after} of {before} total windows)")
     sel = [(m, a, w, wk) for m, a, w, wk in obs if lo <= a < hi and m0 <= m <= m1]
     if one_per_window:
         first: dict = {}
@@ -124,9 +136,14 @@ def main() -> int:
         extract()
         return 0
     opw = "--one-per-window" in args
+    since = ""
+    if "--since" in args:
+        i = args.index("--since")
+        since = args[i + 1] if i + 1 < len(args) else ""
+        args = args[:i] + args[i + 2:]
     args = [a for a in args if a != "--one-per-window"]
     if len(args) >= 2:
-        return query(args[0], args[1], opw)
+        return query(args[0], args[1], opw, since)
     print(__doc__)
     return 0
 
